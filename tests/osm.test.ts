@@ -47,3 +47,37 @@ test("GeoJSON preserves geographic coordinates", () => {
 test("empty or undrivable data cannot silently create a fictional spawn", () => {
   assert.throws(() => convert([], [45.13, 8.44, 45.15, 8.47]), /spawn/);
 });
+
+import { normalize } from '../scripts/osm/normalize';
+import { collides } from '../src/game/physics';
+import { readFileSync } from 'node:fs';
+import type { City } from '../src/geo/types';
+test('API multipolygon members assemble and preserve inner courtyards', () => {
+  const elements = [
+    ...[[0,0],[0,10],[10,10],[10,0],[3,3],[3,7],[7,7],[7,3]].map(([lon,lat],i)=>({type:'node',id:i+1,lon,lat})),
+    {type:'way',id:10,nodes:[1,2,3]}, {type:'way',id:11,nodes:[1,4,3]},
+    {type:'way',id:12,nodes:[5,6,7,8,5]},
+    {type:'relation',id:20,tags:{type:'multipolygon',building:'yes'},members:[{type:'way',ref:10,role:'outer'},{type:'way',ref:11,role:'outer'},{type:'way',ref:12,role:'inner'}]}
+  ];
+  const result = normalize(elements);
+  assert.equal(result.length,1);
+  assert.equal(result[0].geometry!.length,5);
+  assert.equal(result[0].holes!.length,1);
+  assert.equal(geojson(result).features[0].geometry.coordinates.length,2);
+});
+test('courtyards remain empty but their walls still collide', () => {
+  const buildings = [{id:1,height:10,points:[[0,0],[20,0],[20,20],[0,20],[0,0]] as [number,number][],holes:[[[5,5],[15,5],[15,15],[5,15],[5,5]] as [number,number][]]}];
+  assert.equal(collides(10,10,buildings,1),false);
+  assert.equal(collides(5.5,10,buildings,1),true);
+  assert.equal(collides(2,10,buildings,1),true);
+});
+test('bundled Casale data contains real central squares and a clear road spawn', () => {
+  const city:City = JSON.parse(readFileSync('public/data/city.json','utf8'));
+  assert.equal(city.real,true);
+  assert.ok(city.buildings.length>400);
+  assert.ok(city.roads.some(r=>r.name==='Piazza Castello'));
+  assert.ok(city.areas.some(a=>a.name?.includes('Mazzini')));
+  assert.ok(city.buildings.some(b=>(b.holes?.length??0)>0));
+  assert.equal(collides(city.spawn.x,city.spawn.z,city.buildings,3),false);
+  assert.ok(city.roads.filter(r=>r.drivable).some(r=>r.points.slice(1).some((b,i)=>Math.hypot((r.points[i][0]+b[0])/2-city.spawn.x,(r.points[i][1]+b[1])/2-city.spawn.z)<0.01)));
+});

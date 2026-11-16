@@ -20,7 +20,11 @@ export function buildMinimap(city: City) {
   for (const building of city.buildings) {
     ctx.beginPath();
     building.points.forEach(([x,z], i) => i ? ctx.lineTo(x,z) : ctx.moveTo(x,z));
-    ctx.fill();
+    for (const hole of building.holes ?? []) {
+      hole.forEach(([x,z], i) => i ? ctx.lineTo(x,z) : ctx.moveTo(x,z));
+      ctx.closePath();
+    }
+    ctx.fill('evenodd');
   }
   ctx.strokeStyle = '#faf9eb';
   ctx.lineCap = 'round';

@@ -7,11 +7,15 @@ export interface Road {
   drivable: boolean;
 }
 export interface Building {
+  name?: string;
+  holes?: Point[][];
   id: number;
   points: Point[];
   height: number;
 }
 export interface Area {
+  name?: string;
+  holes?: Point[][];
   id: number;
   points: Point[];
   kind: "green" | "square" | "water";

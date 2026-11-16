@@ -2,6 +2,8 @@ import { project, ORIGIN } from "../../src/geo/coordinates";
 import type { City, Point } from "../../src/geo/types";
 import { collides } from "../../src/game/physics";
 export interface OsmWay {
+  sourceId?: string;
+  holes?: { lat: number; lon: number }[][];
   type: string;
   id: number;
   tags?: Record<string, string>;
@@ -53,6 +55,8 @@ export function convert(
       city.buildings.push({
         id: e.id,
         points,
+        holes: e.holes?.map(ring => ring.map(p => project(p.lon, p.lat))),
+        name: t.name,
         height: Math.min(
           80,
           numberTag(t.height, numberTag(t["building:levels"], 3) * 3.1),
@@ -89,15 +93,17 @@ export function convert(
         t.natural === "wood" ||
         t.natural === "water" ||
         t.highway === "pedestrian" ||
-        t.amenity === "parking")
+        t.amenity === "parking" || t.place === "square")
     ) {
       city.areas.push({
         id: e.id,
         points,
+        holes: e.holes?.map(ring => ring.map(p => project(p.lon, p.lat))),
+        name: t.name,
         kind:
           t.natural === "water"
             ? "water"
-            : t.highway === "pedestrian" || t.amenity === "parking"
+            : t.highway === "pedestrian" || t.amenity === "parking" || t.place === "square"
               ? "square"
               : "green",
       });
@@ -149,14 +155,14 @@ export function geojson(elements: OsmWay[]) {
             e.tags?.landuse ||
             e.tags?.leisure ||
             e.tags?.area === "yes" ||
-            e.tags?.natural);
+            e.tags?.natural || e.tags?.place === "square");
         return {
           type: "Feature",
-          id: `way/${e.id}`,
+          id: e.sourceId ?? `way/${e.id}`,
           properties: e.tags ?? {},
           geometry: {
             type: polygon ? "Polygon" : "LineString",
-            coordinates: polygon ? [coordinates] : coordinates,
+            coordinates: polygon ? [coordinates, ...(e.holes ?? []).map(ring => ring.map(p => [p.lon,p.lat]))] : coordinates,
           },
         };
       }),

@@ -75,9 +75,9 @@ export function collides(
       z > maxZ + radius
     )
       return false;
-    if (inside(x, z, b.points)) return true;
-    return b.points.some((a, i) => {
-      const c = b.points[(i + 1) % b.points.length],
+    if (inside(x, z, b.points) && !(b.holes ?? []).some(h => inside(x,z,h))) return true;
+    return [b.points, ...(b.holes ?? [])].some(ring => ring.some((a, i) => {
+      const c = ring[(i + 1) % ring.length],
         dx = c[0] - a[0],
         dz = c[1] - a[1];
       const t = Math.max(
@@ -88,7 +88,7 @@ export function collides(
         ),
       );
       return Math.hypot(x - a[0] - t * dx, z - a[1] - t * dz) < radius;
-    });
+    }));
   });
 }
 export function stepVehicle(

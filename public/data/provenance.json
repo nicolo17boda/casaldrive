@@ -1,0 +1,20 @@
+{
+  "source": "https://api.openstreetmap.org/api/0.6/map.json?bbox=8.446,45.134,8.457,45.141",
+  "query": null,
+  "bbox": [
+    45.134,
+    8.446,
+    45.141,
+    8.457
+  ],
+  "downloadedAt": "2026-11-16T09:51:16.636Z",
+  "attribution": "© OpenStreetMap contributors",
+  "license": "ODbL-1.0",
+  "copyright": "https://www.openstreetmap.org/copyright",
+  "projection": "Local equirectangular, WGS84 radius 6378137, X east / Z south, metres",
+  "origin": [
+    8.4524,
+    45.1372
+  ],
+  "limitations": "OSM polygons and assembled multipolygon courtyards. Incomplete relations skipped. Flat terrain; no bridge/tunnel geometry. Heights estimated where absent."
+}
