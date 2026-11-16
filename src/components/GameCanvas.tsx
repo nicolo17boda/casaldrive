@@ -1,7 +1,7 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky } from "@react-three/drei";
 import { useRef } from "react";
-import { Group, Vector3 } from "three";
+import { Group, MeshStandardMaterial, Vector3 } from "three";
 import type { City } from "../geo/types";
 import { stepVehicle, type VehicleState } from "../game/physics";
 import { controls } from "../game/input";
@@ -14,7 +14,21 @@ export interface GameProps {
   cameraDistance: number;
   topSpeed: number;
 }
-function Car() {
+function Car({ vehicle, paused }: { vehicle: VehicleState; paused: boolean }) {
+  const frontWheels = useRef<(Group | null)[]>([]);
+  const brakeLights = useRef<(MeshStandardMaterial | null)[]>([]);
+  useFrame(() => {
+    if (paused) return;
+    for (const wheel of frontWheels.current) {
+      if (wheel) wheel.rotation.y = vehicle.steering * 0.48;
+    }
+    // S brakes while travelling forwards; reversing alone does not light the stops.
+    const braking = (controls.brake && vehicle.speed > 0.3) ||
+      (controls.throttle && vehicle.speed < -0.3) || controls.handbrake;
+    for (const light of brakeLights.current) {
+      if (light) light.emissiveIntensity = braking ? 2.5 : 0.12;
+    }
+  });
   return (
     <group>
       <mesh position={[0, 0.65, 0]} castShadow>
@@ -31,15 +45,16 @@ function Car() {
       </mesh>
       {[-1, 1].flatMap((x) =>
         [-1.25, 1.25].map((z) => (
-          <mesh
+          <group
             key={`${x},${z}`}
             position={[x * 0.88, 0.4, z]}
-            rotation={[0, 0, Math.PI / 2]}
-            castShadow
+            ref={z < 0 ? (wheel) => { frontWheels.current[x < 0 ? 0 : 1] = wheel; } : undefined}
           >
-            <cylinderGeometry args={[0.38, 0.38, 0.25, 12]} />
-            <meshStandardMaterial color="#202a29" />
-          </mesh>
+            <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
+              <cylinderGeometry args={[0.38, 0.38, 0.25, 12]} />
+              <meshStandardMaterial color="#202a29" />
+            </mesh>
+          </group>
         )),
       )}
       {[-0.6, 0.6].map((x) => (
@@ -54,7 +69,12 @@ function Car() {
           </mesh>
           <mesh position={[x, 0.7, 2.06]}>
             <boxGeometry args={[0.45, 0.18, 0.04]} />
-            <meshStandardMaterial color="#c84032" />
+            <meshStandardMaterial
+              ref={(light) => { brakeLights.current[x < 0 ? 0 : 1] = light; }}
+              color="#c84032"
+              emissive="#ff2418"
+              emissiveIntensity={0.12}
+            />
           </mesh>
         </group>
       ))}
@@ -111,7 +131,7 @@ function Simulation(props: GameProps) {
   });
   return (
     <group ref={car}>
-      <Car />
+      <Car vehicle={props.vehicle} paused={props.paused} />
     </group>
   );
 }
