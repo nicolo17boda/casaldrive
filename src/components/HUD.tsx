@@ -1,17 +1,20 @@
 import { useEffect, useRef, useState } from "react";
+import { buildMinimap } from "./minimap";
 import type { City } from "../geo/types";
 import type { VehicleState } from "../game/physics";
-export const cameras = ["Inseguimento", "Ravvicinata", "Panoramica"];
+const cameras = ["Inseguimento", "Ravvicinata", "Panoramica"];
 export default function HUD({
   city,
   vehicle,
   cameraMode,
   onPause,
+  paused,
 }: {
   city: City;
   vehicle: VehicleState;
   cameraMode: number;
   onPause: () => void;
+  paused: boolean;
 }) {
   const [stats, setStats] = useState({
     speed: 0,
@@ -20,14 +23,20 @@ export default function HUD({
     reverse: false,
   });
   const canvas = useRef<HTMLCanvasElement>(null);
+  const map = useRef<ReturnType<typeof buildMinimap> | null>(null);
   useEffect(() => {
-    const id = setInterval(() => {
-      setStats({
+    map.current = buildMinimap(city);
+    return () => { map.current = null; };
+  }, [city]);
+  useEffect(() => {
+    const draw = () => {
+      const nextStats = {
         speed: Math.round(Math.abs(vehicle.speed) * 3.6),
-        distance: vehicle.distance,
+        distance: Math.floor(vehicle.distance / 100) * 100,
         collision: vehicle.collision,
         reverse: vehicle.speed < -0.1,
-      });
+      };
+      setStats(previous => previous.speed === nextStats.speed && previous.distance === nextStats.distance && previous.collision === nextStats.collision && previous.reverse === nextStats.reverse ? previous : nextStats);
       const ctx = canvas.current?.getContext("2d");
       if (!ctx) return;
       const size = 220,
@@ -35,30 +44,14 @@ export default function HUD({
       ctx.clearRect(0, 0, size, size);
       ctx.fillStyle = "#e2e4d4";
       ctx.fillRect(0, 0, size, size);
-      ctx.save();
-      ctx.translate(size / 2, size / 2);
-      ctx.scale(scale, scale);
-      ctx.translate(-vehicle.x, -vehicle.z);
-      ctx.fillStyle = "#bdc1af";
-      for (const b of city.buildings) {
-        ctx.beginPath();
-        b.points.forEach(([x, z], i) =>
-          i ? ctx.lineTo(x, z) : ctx.moveTo(x, z),
-        );
-        ctx.fill();
+      const cached = map.current;
+      if (cached) {
+        const extent = size / scale * cached.scale;
+        ctx.drawImage(cached.canvas,
+          (vehicle.x - cached.originX) * cached.scale - extent / 2,
+          (vehicle.z - cached.originZ) * cached.scale - extent / 2,
+          extent, extent, 0, 0, size, size);
       }
-      ctx.strokeStyle = "#faf9eb";
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      for (const r of city.roads) {
-        ctx.lineWidth = r.width;
-        ctx.beginPath();
-        r.points.forEach(([x, z], i) =>
-          i ? ctx.lineTo(x, z) : ctx.moveTo(x, z),
-        );
-        ctx.stroke();
-      }
-      ctx.restore();
       ctx.save();
       ctx.translate(110, 110);
       ctx.rotate(-vehicle.yaw);
@@ -74,9 +67,12 @@ export default function HUD({
       ctx.fill();
       ctx.stroke();
       ctx.restore();
-    }, 100);
+    };
+    draw();
+    if (paused) return;
+    const id = setInterval(draw, 100);
     return () => clearInterval(id);
-  }, [city, vehicle]);
+  }, [city, vehicle, paused]);
   return (
     <div className="hud">
       <header>

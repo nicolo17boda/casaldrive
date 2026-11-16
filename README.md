@@ -115,7 +115,7 @@ landmarks and broader city coverage.
 
 ## Verification for this delivery
 
-- Production build and eleven automated regression tests pass.
+- Production build and fourteen automated regression tests pass.
 - Chrome manual smoke test: rendered 3D scene, forward acceleration, reverse,
   camera switching, reset and pause verified using actual keyboard input.
 - OSM retrieval was attempted against two endpoints (HTTP 406 and 429), plus a
@@ -123,3 +123,13 @@ landmarks and broader city coverage.
   delivery. Converter tests use synthetic fixtures explicitly confined to tests.
 - Full-city geography, FPS benchmarking and detailed collision/camera QA remain
   outstanding; Milestone 2 is prepared but not complete.
+
+## Fluidity update
+
+Rendering interpolates between 120 Hz physics ticks (at most 8.3 ms of visual
+latency), including heading. The camera damps both position and look target.
+The minimap rasterizes geography once per city into a bitmap capped at 2048 px,
+then copies only the visible region at 10 Hz. Unchanged HUD values do not rerender.
+City geometry is memoized across menu changes. Pausing switches the 3D canvas to
+on-demand rendering and stops HUD polling. No comparative FPS claim has been
+measured yet; the changes were checked with automated tests and a Chrome smoke test.

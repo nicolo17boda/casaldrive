@@ -83,6 +83,7 @@ export default function App() {
           topSpeed={topSpeed}
         />
         <HUD
+          paused={paused}
           {...world}
           cameraMode={cameraMode}
           onPause={() => setPaused(true)}

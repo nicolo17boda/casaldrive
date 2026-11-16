@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import {
   BufferGeometry,
   Float32BufferAttribute,
@@ -81,21 +81,22 @@ function BuildingMesh({
     </mesh>
   );
 }
-export default function CityWorld({ city }: { city: City }) {
+const CityWorld = memo(function CityWorld({ city }: { city: City }) {
   const asphalt = useMemo(() => roadsGeometry(city, true), [city]);
   const paths = useMemo(() => roadsGeometry(city, false), [city]);
+  const areas = useMemo(() => city.areas.map(a => ({...a, geometry: new ShapeGeometry(shape(a.points))})), [city]);
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[6000, 6000]} />
         <meshStandardMaterial color="#a3ad8a" />
       </mesh>
-      {city.areas.map((a) => (
+      {areas.map((a) => (
         <mesh
           key={a.id}
           rotation={[-Math.PI / 2, 0, 0]}
           position={[0, 0.025, 0]}
-          geometry={new ShapeGeometry(shape(a.points))}
+          geometry={a.geometry}
         >
           <meshStandardMaterial
             color={
@@ -120,4 +121,5 @@ export default function CityWorld({ city }: { city: City }) {
       ))}
     </group>
   );
-}
+});
+export default CityWorld;

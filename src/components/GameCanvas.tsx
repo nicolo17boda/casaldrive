@@ -1,6 +1,7 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky } from "@react-three/drei";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
+import { FIXED_STEP, MotionInterpolator } from "../game/interpolation";
 import { Group, MeshStandardMaterial, Vector3 } from "three";
 import type { City } from "../geo/types";
 import { stepVehicle, type VehicleState } from "../game/physics";
@@ -84,10 +85,11 @@ function Car({ vehicle, paused }: { vehicle: VehicleState; paused: boolean }) {
 function Simulation(props: GameProps) {
   const car = useRef<Group>(null);
   const { camera } = useThree();
-  const accumulator = useRef(0);
+  const motion = useMemo(() => new MotionInterpolator(props.vehicle), [props.vehicle]);
   const initialized = useRef(false);
   const desired = useRef(new Vector3());
   const target = useRef(new Vector3());
+  const smoothTarget = useRef(new Vector3());
   useFrame((_, delta) => {
     const {
       vehicle: v,
@@ -97,38 +99,31 @@ function Simulation(props: GameProps) {
       cameraDistance,
       topSpeed,
     } = props;
-    if (!paused) {
-      accumulator.current += Math.min(delta, 0.1);
-      while (accumulator.current >= 1 / 120) {
-        stepVehicle(v, controls, 1 / 120, city, topSpeed);
-        accumulator.current -= 1 / 120;
-      }
-    } else accumulator.current = 0;
+    const pose = motion.advance(v, delta, paused, () => {
+      stepVehicle(v, controls, FIXED_STEP, city, topSpeed);
+    });
     if (car.current) {
-      car.current.position.set(v.x, 0, v.z);
-      car.current.rotation.y = v.yaw;
+      car.current.position.set(pose.x, 0, pose.z);
+      car.current.rotation.y = pose.yaw;
     }
-    const distance =
-      cameraMode === 1 ? 5 : cameraMode === 2 ? 22 : cameraDistance;
-    desired.current.set(
-      v.x + Math.sin(v.yaw) * distance,
+    const distance = cameraMode === 1 ? 5 : cameraMode === 2 ? 22 : cameraDistance;
+    const sin = Math.sin(pose.yaw), cos = Math.cos(pose.yaw);
+    desired.current.set(pose.x + sin * distance,
       cameraMode === 2 ? 28 : cameraMode === 1 ? 3.6 : 5.5,
-      v.z + Math.cos(v.yaw) * distance,
-    );
-    if (
-      !initialized.current ||
-      camera.position.distanceTo(desired.current) > 90
-    ) {
+      pose.z + cos * distance);
+    target.current.set(pose.x - sin * 5, 1.2, pose.z - cos * 5);
+    const damping = 1 - Math.exp(-5 * Math.min(delta, 0.1));
+    if (!initialized.current || camera.position.distanceTo(desired.current) > 90) {
       camera.position.copy(desired.current);
+      smoothTarget.current.copy(target.current);
       initialized.current = true;
-    } else camera.position.lerp(desired.current, 1 - Math.exp(-5 * delta));
-    target.current.set(
-      v.x - Math.sin(v.yaw) * 5,
-      1.2,
-      v.z - Math.cos(v.yaw) * 5,
-    );
-    camera.lookAt(target.current);
-  });
+    } else {
+      camera.position.lerp(desired.current, damping);
+      smoothTarget.current.lerp(target.current, damping);
+    }
+    camera.lookAt(smoothTarget.current);
+  }, -1);
+
   return (
     <group ref={car}>
       <Car vehicle={props.vehicle} paused={props.paused} />
@@ -138,10 +133,10 @@ function Simulation(props: GameProps) {
 export default function GameCanvas(props: GameProps) {
   return (
     <Canvas
-      shadows
+      frameloop={props.paused ? "demand" : "always"}
       dpr={[1, 1.5]}
       camera={{ fov: 58, near: 0.2, far: 2200, position: [0, 6, 12] }}
-      gl={{ antialias: true }}
+      gl={{ antialias: true, powerPreference: "high-performance" }}
       fallback={
         <div className="fatal">
           WebGL non disponibile. Prova un browser con accelerazione grafica.
