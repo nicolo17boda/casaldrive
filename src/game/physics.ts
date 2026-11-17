@@ -1,6 +1,7 @@
 import { inside, moveVehicle } from "./collision";
 export { inside } from "./collision";
 import type { Building, City } from "../geo/types";
+import { buildingBounds } from './spatialIndex';
 export interface VehicleState {
   x: number;
   z: number;
@@ -35,20 +36,6 @@ export const createVehicle = (spawn: City["spawn"]): VehicleState => ({
   distance: 0,
   collision: false,
 });
-const boundsCache = new WeakMap<Building, [number, number, number, number]>();
-function buildingBounds(b: Building) {
-  let bounds = boundsCache.get(b);
-  if (!bounds) {
-    bounds = [
-      Math.min(...b.points.map((p) => p[0])),
-      Math.min(...b.points.map((p) => p[1])),
-      Math.max(...b.points.map((p) => p[0])),
-      Math.max(...b.points.map((p) => p[1])),
-    ];
-    boundsCache.set(b, bounds);
-  }
-  return bounds;
-}
 export function collides(
   x: number,
   z: number,

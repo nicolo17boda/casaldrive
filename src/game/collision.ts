@@ -1,4 +1,5 @@
 import type { Building, City, Point } from '../geo/types';
+import { buildingBounds, buildingIndex } from './spatialIndex';
 export function inside(x: number, z: number, points: Point[]) {
   let hit = false;
   for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
@@ -18,17 +19,6 @@ export function inside(x: number, z: number, points: Point[]) {
 export const CAR_HALF_WIDTH = 1.05;
 export const CAR_HALF_LENGTH = 2.1;
 const RADIUS = Math.hypot(CAR_HALF_WIDTH, CAR_HALF_LENGTH);
-const boundsCache = new WeakMap<Building, number[]>();
-
-function bounds(building: Building) {
-  let box = boundsCache.get(building);
-  if (!box) {
-    box = [Math.min(...building.points.map(p => p[0])), Math.min(...building.points.map(p => p[1])),
-      Math.max(...building.points.map(p => p[0])), Math.max(...building.points.map(p => p[1]))];
-    boundsCache.set(building, box);
-  }
-  return box;
-}
 
 /** Segment / local car rectangle intersection (including endpoints inside). */
 function intersectsCar(a: Point, b: Point) {
@@ -57,7 +47,7 @@ export function vehicleCollides(x: number, z: number, yaw: number, buildings: Bu
   }
   if (worldBounds && corners.some(([u,v]) => u < worldBounds[0] || v < worldBounds[1] || u > worldBounds[2] || v > worldBounds[3])) return true;
   return buildings.some(building => {
-    const [left, top, right, bottom] = bounds(building);
+    const [left, top, right, bottom] = buildingBounds(building);
     if (x + RADIUS < left || x - RADIUS > right || z + RADIUS < top || z - RADIUS > bottom) return false;
     const holes = building.holes ?? [];
     if (corners.some(([u,v]) => inside(u,v,building.points) && !holes.some(hole => inside(u,v,hole)))) return true;
@@ -74,7 +64,12 @@ export function moveVehicle(pose: { x: number; z: number; yaw: number }, dx: num
   let { x, z, yaw } = pose;
   let collision = false;
   let distance = 0;
-  const blocked = (u: number,v: number,angle: number) => vehicleCollides(u,v,angle,city.buildings,city.bounds);
+  // Include the entire sweep and any rotation, also when sliding along either axis.
+  const candidates = buildingIndex(city.buildings).query([
+    Math.min(x, x + dx) - RADIUS, Math.min(z, z + dz) - RADIUS,
+    Math.max(x, x + dx) + RADIUS, Math.max(z, z + dz) + RADIUS,
+  ]);
+  const blocked = (u: number,v: number,angle: number) => vehicleCollides(u,v,angle,candidates,city.bounds);
   for (let i = 0; i < steps; i++) {
     const previousX = x, previousZ = z;
     if (!blocked(x + sx, z + sz, yaw + syaw)) {

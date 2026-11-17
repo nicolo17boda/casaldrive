@@ -4,6 +4,8 @@ A local, lightweight arcade driving prototype built with Vite, React, TypeScript
 Three.js, React Three Fiber and drei. Application code retains the existing GPL-3.0
 license in `LICENSE`.
 
+Development priorities and acceptance criteria are tracked in [ROADMAP.md](ROADMAP.md).
+
 ## Run on macOS
 
 Install Node.js 22 LTS (or a newer supported LTS) and npm, then:
@@ -93,7 +95,8 @@ Attribution appears in the HUD when real data is loaded. See
 - `src/game/physics.ts`: pure arcade physics at 120 Hz.
 - `src/game/collision.ts`: oriented 2.1 × 4.2 m vehicle footprint, courtyard-aware
   polygon contacts, bounded movement increments and axis-separated wall sliding.
-  Cached building bounds reject distant geometry; the circular helper is retained
+  A cached 32 m spatial grid selects buildings along the complete movement sweep;
+  shared building bounds reject distant geometry. The circular helper is retained
   only for conservative spawn clearance checks.
 - `src/game/input.ts`: keyboard state and focus-loss handling.
 - `src/geo/`: coordinate conversion, typed city model, loader and labeled test circuit.
@@ -124,15 +127,16 @@ local file. Chunk streaming, LOD and instanced vegetation are not implemented.
 There is no hardware-wide 60 FPS guarantee. The production bundle currently has a
 Vite size advisory for the 3D dependencies; it builds successfully.
 
-Next: improve intersection polygons, extend static batches into chunk streaming
-and implement a spatial collision index, then add terrain, vegetation,
-landmarks and broader city coverage.
+Next: measure frame and simulation times, protect the camera from buildings,
+improve intersection polygons, then extend static batches into chunk streaming.
+Terrain, vegetation, landmarks and broader city coverage follow those foundations.
+See [ROADMAP.md](ROADMAP.md) for the ordered development blocks.
 
 ## City rendering verification
 
 - The bundled real dataset contains 530 buildings, 406 road segments and 39 areas.
   Source and licensing are recorded in `public/data/provenance.json`.
-- Production build and 28 automated tests pass, including raycasting checks for
+- Production build and 31 automated tests pass, including raycasting checks for
   open courtyards, roof elevation and finite bounds of the real city batches.
   Collision tests cover narrow alleys, rotation near walls, frontal/reverse
   contact, sliding, thin obstacles and whole-vehicle world bounds. Road tests
