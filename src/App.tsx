@@ -34,6 +34,7 @@ export default function App() {
   const [cameraMode, setCameraMode] = useState(3);
   const [cameraDistance, setCameraDistance] = useState(11);
   const [topSpeed, setTopSpeed] = useState(100);
+  const [engineVolume, setEngineVolume] = useState(0.65);
   const [fallback, setFallback] = useState(false);
   useEffect(() => {
     let active = true;
@@ -81,6 +82,7 @@ export default function App() {
           cameraMode={cameraMode}
           cameraDistance={cameraDistance}
           topSpeed={topSpeed}
+          engineVolume={engineVolume}
         />
         <HUD
           paused={paused}
@@ -142,6 +144,18 @@ export default function App() {
                 (document.activeElement as HTMLElement)?.blur();
               }}>Esplora dall’alto <span>◎</span></button>}
               <div className="settings">
+                <label>
+                  Volume motore <span>{engineVolume === 0 ? 'Disattivato' : `${Math.round(engineVolume * 100)}%`}</span>
+                  <input
+                    aria-label="Volume motore"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={Math.round(engineVolume * 100)}
+                    onChange={(e) => setEngineVolume(+e.target.value / 100)}
+                  />
+                </label>
                 <label>
                   Distanza camera <span>{cameraDistance} m</span>
                   <input

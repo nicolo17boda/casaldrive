@@ -100,6 +100,11 @@ Attribution appears in the HUD when real data is loaded. See
   shared building bounds reject distant geometry. The circular helper is retained
   only for conservative spawn clearance checks.
 - `src/game/input.ts`: keyboard state and focus-loss handling.
+- `src/game/engineModel.ts` and `engineAudio.ts`: procedural inline-four engine
+  audio with five simulated automatic gears, launch clutch slip, reverse,
+  combustion harmonics and intake noise. The menu controls engine volume (zero
+  mutes it). Audio starts after a keyboard/pointer gesture and fades out during
+  pause, city overview and focus loss. No external audio assets are required.
 - `src/geo/`: coordinate conversion, typed city model, loader and labeled test circuit.
 - `src/world/CityWorld.tsx`: area surfaces, merged roads and building batches.
 - `src/world/geometry.ts`: extruded footprints with courtyard holes, roof/wall colors
@@ -115,7 +120,9 @@ intersection polygon unions and lane markings remain future work.
 ## Scope and limitations
 
 This is a prototype, not the full city or a complete GTA simulation. No traffic,
-pedestrians, audio, missions, gamepad or touch driving. Collision uses an oriented rectangle including wheel clearance. Translation and
+pedestrians, missions, gamepad or touch driving. Engine audio is synthesized, not
+a recording of a specific car; its transmission does not change driving physics.
+Collision uses an oriented rectangle including wheel clearance. Translation and
 rotation are subdivided into increments of at most 0.2 m of combined travel at
 the outer corner. Sliding is an arcade approximation, not a rigid-body solver.
 Driving cameras retract before building walls and roofs, using conservative clearance

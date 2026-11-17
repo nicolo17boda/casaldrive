@@ -8,6 +8,7 @@ import { stepVehicle, type VehicleState } from "../game/physics";
 import { controls } from "../game/input";
 import { cameraTravelFraction } from '../game/cameraCollision';
 import CityWorld from "../world/CityWorld";
+import EngineSound from './EngineSound';
 export interface GameProps {
   city: City;
   vehicle: VehicleState;
@@ -15,6 +16,7 @@ export interface GameProps {
   cameraMode: number;
   cameraDistance: number;
   topSpeed: number;
+  engineVolume: number;
 }
 function Car({ vehicle, paused }: { vehicle: VehicleState; paused: boolean }) {
   const frontWheels = useRef<(Group | null)[]>([]);
@@ -178,6 +180,7 @@ export default function GameCanvas(props: GameProps) {
       <Sky sunPosition={[80, 150, 60]} turbidity={4} rayleigh={0.4} />
       <CityWorld city={props.city} />
       <Simulation {...props} />
+      <EngineSound vehicle={props.vehicle} active={!props.paused && props.cameraMode !== 3} volume={props.engineVolume} />
       {props.cameraMode === 3 && <CityOverview city={props.city} paused={props.paused} />}
     </Canvas>
   );

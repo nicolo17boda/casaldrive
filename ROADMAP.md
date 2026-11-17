@@ -64,7 +64,9 @@ non disponibile. Il blocco 1 resta quindi aperto per la parte di rendering.
 ## Blocco 4 — Identità locale e contenuti
 
 - Punti di riferimento, vegetazione e terreno compatibili con i dati disponibili.
-- Successivamente: percorsi/obiettivi di guida, audio e ulteriori modalità di input.
+- Audio motore procedurale disponibile: minimo, carico, cinque marce simulate,
+  retromarcia, volume e silenziamento in pausa/vista città.
+- Successivamente: percorsi/obiettivi di guida, ulteriori effetti audio e modalità di input.
 - Traffico e pedoni richiedono una progettazione dedicata dopo i blocchi precedenti.
 - Uscita: un percorso riconoscibile e completo, con asset e attribuzioni verificati.
 
