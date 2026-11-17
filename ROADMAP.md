@@ -18,7 +18,9 @@ della mappa e l'aggiunta di contenuti.
 - Verifica automatica: confronto dei contatti indicizzati con la scansione
   completa della città reale, bordi delle celle e coordinate negative; regressioni
   esistenti per vicoli, muri sottili, rotazione, retromarcia e limiti della mappa.
-- Da completare: misurazione dei tempi di frame e della simulazione su un percorso
+- Implementato: `npm run benchmark`, replay di 60 secondi ripetuto cinque volte
+  con verifica di determinismo e misure CPU separate per fisica e camera.
+- Da completare: misurazione dei tempi di frame in browser su un percorso
   ripetibile, con browser, hardware e dimensione della finestra dichiarati.
 - Uscita dal blocco: nessuna regressione nei contatti e misure riproducibili;
   la riduzione dei candidati non costituisce da sola una promessa di FPS.
@@ -29,9 +31,22 @@ nessuna differenza nei contatti e candidati medi inferiori al 10% degli edifici.
 Resta l'avviso Vite sul bundle 3D superiore a 500 kB. Le prestazioni grafiche e
 le interazioni in browser non sono state misurate in questo intervento.
 
+### Incremento successivo — 17 novembre 2026
+
+35 test e build superati. Il [report CPU](docs/benchmarks/2026-11-17.json) registra
+Node 22.16.0 su Apple M4: p95 di circa 0,0015 ms per tick fisico e 0,020 ms per
+controllo camera nel replay. I 7.012 controlli lungo la rete stradale, in quattro
+direzioni, hanno p95 di circa 0,035 ms e 2.206 correzioni. Sono misure locali,
+con cache calde e overhead del timer, non una comparazione né una garanzia di FPS.
+La verifica grafica resta aperta: l'ultima apertura in Chrome ha segnalato WebGL
+non disponibile. Il blocco 1 resta quindi aperto per la parte di rendering.
+
 ## Blocco 2 — Leggibilità e comfort della città
 
-- Proteggere la camera da attraversamenti degli edifici.
+- Implementata la riduzione della distanza della camera nelle modalità di guida:
+  controlli dopo lo smorzamento, rispetto di altezze e cortili, margine di 0,4 m
+  e campioni distanti al massimo 0,2 m. È un'approssimazione conservativa;
+  la panoramica libera non usa questo vincolo. Verifica visiva ancora da eseguire.
 - Migliorare le geometrie degli incroci preservando larghezze e provenienza OSM.
 - Verificare in browser orbita, zoom, passaggio panoramica/guida e pausa.
 - Uscita: percorso di prova tra strade strette e piazze senza camera nei muri,

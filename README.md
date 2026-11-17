@@ -21,6 +21,7 @@ network access at install time; gameplay uses only local assets.
 
 ```sh
 npm test          # physics and OSM conversion regression tests
+npm run benchmark # repeatable CPU simulation and camera collision measurements
 npm run build    # strict TypeScript check + production bundle in dist/
 npm run preview  # serve the production build
 ```
@@ -116,8 +117,10 @@ intersection polygon unions and lane markings remain future work.
 This is a prototype, not the full city or a complete GTA simulation. No traffic,
 pedestrians, audio, missions, gamepad or touch driving. Collision uses an oriented rectangle including wheel clearance. Translation and
 rotation are subdivided into increments of at most 0.2 m of combined travel at
-the outer corner. Sliding is an arcade approximation, not a rigid-body solver. Camera does not avoid building
-walls. Terrain is flat and there is no jumping, suspension, bridge or tunnel support.
+the outer corner. Sliding is an arcade approximation, not a rigid-body solver.
+Driving cameras retract before building walls and roofs, using conservative clearance
+sampled every 0.2 m. City overview remains freely orbitable. Terrain is flat and
+there is no jumping, suspension, bridge or tunnel support.
 Assembled OSM multipolygons retain courtyard holes; incomplete relations are
 skipped. Buildings have simple flat roofs with illustrative terracotta colors
 and no detailed façades. Colors do not represent surveyed materials.
@@ -127,7 +130,7 @@ local file. Chunk streaming, LOD and instanced vegetation are not implemented.
 There is no hardware-wide 60 FPS guarantee. The production bundle currently has a
 Vite size advisory for the 3D dependencies; it builds successfully.
 
-Next: measure frame and simulation times, protect the camera from buildings,
+Next: measure browser frame times and visually verify camera retraction,
 improve intersection polygons, then extend static batches into chunk streaming.
 Terrain, vegetation, landmarks and broader city coverage follow those foundations.
 See [ROADMAP.md](ROADMAP.md) for the ordered development blocks.
@@ -136,7 +139,7 @@ See [ROADMAP.md](ROADMAP.md) for the ordered development blocks.
 
 - The bundled real dataset contains 530 buildings, 406 road segments and 39 areas.
   Source and licensing are recorded in `public/data/provenance.json`.
-- Production build and 31 automated tests pass, including raycasting checks for
+- Production build and 35 automated tests pass, including raycasting checks for
   open courtyards, roof elevation and finite bounds of the real city batches.
   Collision tests cover narrow alleys, rotation near walls, frontal/reverse
   contact, sliding, thin obstacles and whole-vehicle world bounds. Road tests
@@ -145,7 +148,7 @@ See [ROADMAP.md](ROADMAP.md) for the ordered development blocks.
   Full orbit/zoom and overview-to-driving interaction checks remain outstanding:
   the UI automation session was interrupted before those checks completed.
 - Buildings use static spatial batches, not streaming. Full-city coverage, FPS
-  benchmarking, detailed landmarks and camera collision remain outstanding.
+  benchmarking, detailed landmarks and visual camera verification remain outstanding.
 - Vite still reports the existing large-bundle advisory for the 3D dependencies.
 
 ## Fluidity update
@@ -157,3 +160,13 @@ then copies only the visible region at 10 Hz. Unchanged HUD values do not rerend
 City geometry is memoized across menu changes. Pausing switches the 3D canvas to
 on-demand rendering and stops HUD polling. No comparative FPS claim has been
 measured yet; the changes were checked with automated tests and a Chrome smoke test.
+
+## Repeatable CPU benchmark
+
+`npm run benchmark` runs a 60-second input replay five times after warm-up and
+checks identical final states. It reports physics and camera-query timings, CPU,
+Node version and a dataset hash. A separate probe checks every road vertex in
+four camera directions. The stored [measurement](docs/benchmarks/2026-11-17.json)
+includes 36,000 simulation ticks and 7,012 road camera probes (2,206 retractions).
+This measures CPU work only, not rendering or FPS; timer overhead is included.
+The latest browser opening reported WebGL unavailable, so visual checks remain pending.

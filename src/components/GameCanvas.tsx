@@ -6,6 +6,7 @@ import { Group, MeshStandardMaterial, Vector3 } from "three";
 import type { City } from "../geo/types";
 import { stepVehicle, type VehicleState } from "../game/physics";
 import { controls } from "../game/input";
+import { cameraTravelFraction } from '../game/cameraCollision';
 import CityWorld from "../world/CityWorld";
 export interface GameProps {
   city: City;
@@ -90,6 +91,7 @@ function Simulation(props: GameProps) {
   const desired = useRef(new Vector3());
   const target = useRef(new Vector3());
   const smoothTarget = useRef(new Vector3());
+  const anchor = useRef(new Vector3());
   useFrame((_, delta) => {
     const {
       vehicle: v,
@@ -125,6 +127,10 @@ function Simulation(props: GameProps) {
       camera.position.lerp(desired.current, damping);
       smoothTarget.current.lerp(target.current, damping);
     }
+    // Clamp after damping: interpolation between two safe positions can cross a wall.
+    anchor.current.set(pose.x, 1.8, pose.z);
+    const travel = cameraTravelFraction(anchor.current, camera.position, city);
+    camera.position.lerpVectors(anchor.current, camera.position, travel);
     camera.lookAt(smoothTarget.current);
   }, -1);
 
