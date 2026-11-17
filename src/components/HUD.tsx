@@ -2,18 +2,20 @@ import { useEffect, useRef, useState } from "react";
 import { buildMinimap } from "./minimap";
 import type { City } from "../geo/types";
 import type { VehicleState } from "../game/physics";
-const cameras = ["Inseguimento", "Ravvicinata", "Panoramica"];
+const cameras = ["Inseguimento", "Ravvicinata", "Panoramica", "Vista città"];
 export default function HUD({
   city,
   vehicle,
   cameraMode,
   onPause,
+  onOverview,
   paused,
 }: {
   city: City;
   vehicle: VehicleState;
   cameraMode: number;
   onPause: () => void;
+  onOverview: () => void;
   paused: boolean;
 }) {
   const [stats, setStats] = useState({
@@ -89,16 +91,19 @@ export default function HUD({
               : "Geometria dimostrativa · non geografica"}
           </small>
         </div>
+        <button className="overview-button" onClick={onOverview}>
+          {cameraMode === 3 ? "Torna alla guida" : "Vista città"}
+        </button>
         <button className="pause-button" onClick={onPause}>
           Ⅱ <span>Pausa</span>
           <kbd>ESC</kbd>
         </button>
       </header>
       <div className="place-tag">
-        <span>ESPLORAZIONE LIBERA</span>
-        <h1>{city.real ? "Un giro in città." : "Si parte da qui."}</h1>
+        <span>{cameraMode === 3 ? "LA CITTÀ DALL’ALTO" : "ESPLORAZIONE LIBERA"}</span>
+        <h1>{cameraMode === 3 ? city.name : city.real ? "Un giro in città." : "Si parte da qui."}</h1>
         <p>
-          {city.real
+          {cameraMode === 3 ? "Trascina per ruotare · rotella per avvicinarti · tasto destro per spostarti" : city.real
             ? "Le strade di Casale, al tuo ritmo."
             : "Metti alla prova la tua prossima avventura."}
         </p>
@@ -114,7 +119,12 @@ export default function HUD({
           <b>↗</b>
         </div>
       </div>
-      <div className="drive-info">
+      {cameraMode === 3 ? <div className="city-summary">
+        <span>{city.real ? "CENTRO STORICO · SCALA 1:1" : "CIRCUITO DIMOSTRATIVO"}</span>
+        <strong>{city.buildings.length} edifici</strong>
+        <p>{city.roads.length} tratti stradali · {city.areas.length} aree</p>
+        <small>Volumi semplificati · altezze stimate dove assenti</small>
+      </div> : <div className="drive-info">
         <div className="camera-label">
           ◉ {cameras[cameraMode]} <kbd>C</kbd>
         </div>
@@ -135,7 +145,7 @@ export default function HUD({
           </span>
           <span>{(stats.distance / 1000).toFixed(1)} km</span>
         </div>
-      </div>
+      </div>}
       <footer>
         <span>
           <kbd>W A S D</kbd> guida

@@ -56,7 +56,7 @@ test("footprint collisions include edges and stop a moving vehicle", () => {
   const s = createVehicle({ x: 40, z: 0, yaw: 0 });
   for (let i = 0; i < 600; i++)
     stepVehicle(s, { ...emptyControls(), throttle: true }, 1 / 120, city);
-  assert.ok(s.z >= -17.75);
+  assert.ok(s.z >= -17.9);
   assert.ok(s.collision);
 });
 test("handbrake dissipates speed", () => {

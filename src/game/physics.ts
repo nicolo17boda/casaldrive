@@ -1,4 +1,6 @@
-import type { Building, City, Point } from "../geo/types";
+import { inside, moveVehicle } from "./collision";
+export { inside } from "./collision";
+import type { Building, City } from "../geo/types";
 export interface VehicleState {
   x: number;
   z: number;
@@ -33,19 +35,6 @@ export const createVehicle = (spawn: City["spawn"]): VehicleState => ({
   distance: 0,
   collision: false,
 });
-export function inside(x: number, z: number, points: Point[]) {
-  let hit = false;
-  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-    const a = points[i],
-      b = points[j];
-    if (
-      a[1] > z !== b[1] > z &&
-      x < ((b[0] - a[0]) * (z - a[1])) / (b[1] - a[1]) + a[0]
-    )
-      hit = !hit;
-  }
-  return hit;
-}
 const boundsCache = new WeakMap<Building, [number, number, number, number]>();
 function buildingBounds(b: Building) {
   let bounds = boundsCache.get(b);
@@ -107,31 +96,25 @@ export function stepVehicle(
   if (!c.throttle && !c.brake)
     s.speed = Math.sign(s.speed) * Math.max(0, Math.abs(s.speed) - 0.65 * dt);
   s.speed = Math.max(-8, Math.min(topSpeed / 3.6, s.speed));
-  s.yaw +=
+  const turn =
     s.steering *
     (s.speed / 2.7) *
     (0.48 / (1 + Math.abs(s.speed) * 0.09)) *
     dt *
     (c.handbrake ? 1.5 : 1);
+  const desiredYaw = s.yaw + turn;
   const grip = 1 - Math.exp(-(c.handbrake ? 2 : 12) * dt);
-  s.vx += (-Math.sin(s.yaw) * s.speed - s.vx) * grip;
-  s.vz += (-Math.cos(s.yaw) * s.speed - s.vz) * grip;
-  const x = s.x + s.vx * dt,
-    z = s.z + s.vz * dt;
-  const [minX, minZ, maxX, maxZ] = city.bounds;
-  s.collision =
-    collides(x, z, city.buildings) ||
-    x < minX + 3 ||
-    x > maxX - 3 ||
-    z < minZ + 3 ||
-    z > maxZ - 3;
-  if (s.collision) {
-    s.speed = 0;
-    s.vx = 0;
-    s.vz = 0;
-  } else {
-    s.distance += Math.hypot(x - s.x, z - s.z);
-    s.x = x;
-    s.z = z;
+  s.vx += (-Math.sin(desiredYaw) * s.speed - s.vx) * grip;
+  s.vz += (-Math.cos(desiredYaw) * s.speed - s.vz) * grip;
+  const moved = moveVehicle(s, s.vx * dt, s.vz * dt, turn, city);
+  if (moved.collision && dt > 0) {
+    s.vx = (moved.x - s.x) / dt;
+    s.vz = (moved.z - s.z) / dt;
+    s.speed = -Math.sin(moved.yaw) * s.vx - Math.cos(moved.yaw) * s.vz;
   }
+  s.x = moved.x;
+  s.z = moved.z;
+  s.yaw = moved.yaw;
+  s.collision = moved.collision;
+  s.distance += moved.distance;
 }

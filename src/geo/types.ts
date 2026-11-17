@@ -1,9 +1,12 @@
+import type { WidthSource } from "./roadWidths";
 export type Point = [number, number]; // east, south in metres
 export interface Road {
   id: number;
   name: string;
   points: Point[];
   width: number;
+  widthSource?: WidthSource;
+  highway?: string;
   drivable: boolean;
 }
 export interface Building {

@@ -446,3 +446,28 @@ footer {
 
 .map-scale::after { content: ""; display: block; width: 52px; border-bottom: 2px solid #445247; margin-top: 3px; }
 @media(max-width:700px){ .map-scale::after { width:36px; } }
+
+.overview-button, .preview-city {
+  pointer-events: auto;
+  border: 1px solid #ffffff40;
+  background: #18332dcc;
+  color: #fff9ec;
+  border-radius: 7px;
+  padding: 12px 16px;
+  font-size: 12px;
+}
+.overview-button { margin-left: auto; }
+.overview-button + .pause-button { margin-left: 0; }
+.preview-city { width: 100%; display: flex; justify-content: space-between; margin: -10px 0 20px; }
+.overview-button:hover, .preview-city:hover { background: #355248; }
+.city-summary { position: absolute; right: 44px; bottom: 90px; text-align: right; }
+.city-summary > span { font-size: 10px; letter-spacing: 2px; color: #f5cfad; }
+.city-summary strong { display: block; font-size: 36px; font-weight: 400; margin: 12px 0; }
+.city-summary p { font-size: 13px; }
+.city-summary small { font-size: 10px; opacity: .7; }
+@media (max-width: 700px) {
+  .overview-button { padding: 12px 9px; }
+  .city-summary { right: 20px; bottom: 260px; }
+  .city-summary strong { font-size: 28px; }
+  .place-tag p { max-width: 280px; line-height: 1.6; }
+}

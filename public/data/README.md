@@ -14,3 +14,16 @@ The repository's GPL license applies to application code, not to the OSM databas
 
 If `city.json` is absent or invalid, the game explicitly labels its temporary test
 circuit; that circuit is not a reconstruction of Casale Monferrato.
+
+## Recompute road widths locally
+
+Run `npm run osm:widths` to apply the current width policy to the bundled
+`source.geojson`. This updates only road dimensions and their `highway` and
+`widthSource` metadata in `city.json`; the original download provenance remains
+unchanged. The same policy is used by future `osm:fetch` conversions.
+
+Width precedence is `width:carriageway`, `width`, lane-based estimates, then
+road-class/one-way defaults. These estimates are illustrative carriageway widths,
+not surveyed curb positions, and exclude inferred sidewalks/parking lanes.
+Both the 3D surfaces and the minimap use these same widths. In this dataset only
+Via Duomo has an explicit width (4 m); all other widths are estimated.

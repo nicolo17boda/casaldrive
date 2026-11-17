@@ -31,7 +31,7 @@ export default function App() {
   } | null>(null);
   const [paused, setPaused] = useState(true);
   const [started, setStarted] = useState(false);
-  const [cameraMode, setCameraMode] = useState(0);
+  const [cameraMode, setCameraMode] = useState(3);
   const [cameraDistance, setCameraDistance] = useState(11);
   const [topSpeed, setTopSpeed] = useState(100);
   const [fallback, setFallback] = useState(false);
@@ -57,7 +57,7 @@ export default function App() {
           (document.activeElement as HTMLElement)?.blur();
         }
         if (key === "blur") setPaused(true);
-        if (key === "KeyC") setCameraMode((v) => (v + 1) % 3);
+        if (key === "KeyC") setCameraMode((v) => (v + 1) % 4);
         if (key === "KeyR" && world)
           Object.assign(world.vehicle, createVehicle(world.city.spawn));
       }),
@@ -87,6 +87,10 @@ export default function App() {
           {...world}
           cameraMode={cameraMode}
           onPause={() => setPaused(true)}
+          onOverview={() => {
+            setCameraMode(mode => mode === 3 ? 0 : 3);
+            (document.activeElement as HTMLElement)?.blur();
+          }}
         />
         {paused && (
           <div className="menu-backdrop">
@@ -122,6 +126,7 @@ export default function App() {
               <button
                 className="start"
                 onClick={() => {
+                  setCameraMode(mode => started ? mode : 0);
                   setStarted(true);
                   setPaused(false);
                   (document.activeElement as HTMLElement)?.blur();
@@ -130,6 +135,12 @@ export default function App() {
                 {started ? "Riprendi il viaggio" : "Inizia a guidare"}{" "}
                 <span>↗</span>
               </button>
+              {!started && <button className="preview-city" onClick={() => {
+                setStarted(true);
+                setCameraMode(3);
+                setPaused(false);
+                (document.activeElement as HTMLElement)?.blur();
+              }}>Esplora dall’alto <span>◎</span></button>}
               <div className="settings">
                 <label>
                   Distanza camera <span>{cameraDistance} m</span>

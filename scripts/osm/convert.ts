@@ -1,3 +1,4 @@
+import { roadWidth } from "../../src/geo/roadWidths";
 import { project, ORIGIN } from "../../src/geo/coordinates";
 import type { City, Point } from "../../src/geo/types";
 import { collides } from "../../src/game/physics";
@@ -72,18 +73,12 @@ export function convert(
       const drivable =
         drivableTypes.has(t.highway) &&
         !["no", "private", "agricultural", "forestry"].includes(access);
-      const width = Math.max(
-        1.5,
-        Math.min(
-          25,
-          numberTag(t.width, drivable ? numberTag(t.lanes, 2) * 3 : 3),
-        ),
-      );
       city.roads.push({
         id: e.id,
         name: t.name ?? t.highway,
         points,
-        width,
+        ...roadWidth(t),
+        highway: t.highway,
         drivable,
       });
     } else if (

@@ -2,24 +2,10 @@ import { memo, useMemo } from "react";
 import {
   BufferGeometry,
   Float32BufferAttribute,
-  Shape,
-  Path,
-  ExtrudeGeometry,
   ShapeGeometry,
 } from "three";
-import type { City, Point } from "../geo/types";
-function shape(points: Point[], holes: Point[][] = []) {
-  const s = new Shape();
-  points.forEach(([x, z], i) => (i ? s.lineTo(x, -z) : s.moveTo(x, -z)));
-  s.closePath();
-  for (const ring of holes) {
-    const hole = new Path();
-    ring.forEach(([x,z],i) => i ? hole.lineTo(x,-z) : hole.moveTo(x,-z));
-    hole.closePath();
-    s.holes.push(hole);
-  }
-  return s;
-}
+import { buildingChunks, shape } from "./geometry";
+import type { City } from "../geo/types";
 function roadsGeometry(city: City, drivable: boolean) {
   const vertices: number[] = [];
   for (const road of city.roads.filter((r) => r.drivable === drivable)) {
@@ -44,12 +30,12 @@ function roadsGeometry(city: City, drivable: boolean) {
           x,
           0.06,
           z,
-          x + Math.cos((j * Math.PI) / 6) * w,
+          x + Math.cos((-j * Math.PI) / 6) * w,
           0.06,
-          z + Math.sin((j * Math.PI) / 6) * w,
-          x + Math.cos(((j + 1) * Math.PI) / 6) * w,
+          z + Math.sin((-j * Math.PI) / 6) * w,
+          x + Math.cos((-(j + 1) * Math.PI) / 6) * w,
           0.06,
-          z + Math.sin(((j + 1) * Math.PI) / 6) * w,
+          z + Math.sin((-(j + 1) * Math.PI) / 6) * w,
         );
   }
   const g = new BufferGeometry();
@@ -57,40 +43,8 @@ function roadsGeometry(city: City, drivable: boolean) {
   g.computeVertexNormals();
   return g;
 }
-function BuildingMesh({
-  points,
-  height,
-  holes,
-  id,
-}: {
-  points: Point[];
-  height: number;
-  holes?: Point[][];
-  id: number;
-}) {
-  const geometry = useMemo(
-    () =>
-      new ExtrudeGeometry(shape(points, holes), {
-        depth: height,
-        bevelEnabled: false,
-      }),
-    [points, height, holes],
-  );
-  return (
-    <mesh
-      geometry={geometry}
-      rotation={[-Math.PI / 2, 0, 0]}
-      castShadow
-      receiveShadow
-    >
-      <meshStandardMaterial
-        color={["#d9c9ae", "#c5b49e", "#d4b494", "#c6bda9", "#e5d6be"][Math.abs(id) % 5]}
-        roughness={0.95}
-      />
-    </mesh>
-  );
-}
 const CityWorld = memo(function CityWorld({ city }: { city: City }) {
+  const buildings = useMemo(() => buildingChunks(city.buildings), [city]);
   const asphalt = useMemo(() => roadsGeometry(city, true), [city]);
   const paths = useMemo(() => roadsGeometry(city, false), [city]);
   const areas = useMemo(() => city.areas.map(a => ({...a, geometry: new ShapeGeometry(shape(a.points, a.holes))})), [city]);
@@ -98,7 +52,7 @@ const CityWorld = memo(function CityWorld({ city }: { city: City }) {
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[6000, 6000]} />
-        <meshStandardMaterial color="#a3ad8a" />
+        <meshStandardMaterial color="#c5c5ae" />
       </mesh>
       {areas.map((a) => (
         <mesh
@@ -125,8 +79,10 @@ const CityWorld = memo(function CityWorld({ city }: { city: City }) {
       <mesh geometry={asphalt} receiveShadow>
         <meshStandardMaterial color="#626b68" side={2} roughness={1} />
       </mesh>
-      {city.buildings.map((b) => (
-        <BuildingMesh key={b.id} {...b} />
+      {buildings.map(({ key, geometry }) => (
+        <mesh key={key} geometry={geometry} castShadow receiveShadow>
+          <meshStandardMaterial vertexColors roughness={0.95} />
+        </mesh>
       ))}
     </group>
   );

@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Sky } from "@react-three/drei";
-import { useMemo, useRef } from "react";
+import { OrbitControls, Sky } from "@react-three/drei";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { FIXED_STEP, MotionInterpolator } from "../game/interpolation";
 import { Group, MeshStandardMaterial, Vector3 } from "three";
 import type { City } from "../geo/types";
@@ -99,12 +99,16 @@ function Simulation(props: GameProps) {
       cameraDistance,
       topSpeed,
     } = props;
-    const pose = motion.advance(v, delta, paused, () => {
+    const pose = motion.advance(v, delta, paused || cameraMode === 3, () => {
       stepVehicle(v, controls, FIXED_STEP, city, topSpeed);
     });
     if (car.current) {
       car.current.position.set(pose.x, 0, pose.z);
       car.current.rotation.y = pose.yaw;
+    }
+    if (cameraMode === 3) {
+      initialized.current = false;
+      return;
     }
     const distance = cameraMode === 1 ? 5 : cameraMode === 2 ? 22 : cameraDistance;
     const sin = Math.sin(pose.yaw), cos = Math.cos(pose.yaw);
@@ -130,12 +134,29 @@ function Simulation(props: GameProps) {
     </group>
   );
 }
+function CityOverview({ city, paused }: { city: City; paused: boolean }) {
+  const { camera, size, invalidate } = useThree();
+  const [left, top, right, bottom] = city.bounds;
+  const target = useMemo(() => new Vector3((left + right) / 2, 0, (top + bottom) / 2), [left, top, right, bottom]);
+  const extent = Math.max(right - left, bottom - top);
+  useLayoutEffect(() => {
+    const distance = extent * Math.max(1, size.height / size.width);
+    camera.position.set(target.x + distance * 0.35, distance * 0.95, target.z + distance * 0.7);
+    camera.lookAt(target);
+    camera.updateProjectionMatrix();
+    invalidate();
+  }, [camera, target, extent, size.width, size.height, invalidate]);
+  return <OrbitControls makeDefault target={target} enabled={!paused}
+    minDistance={40} maxDistance={extent * 2.5} maxPolarAngle={Math.PI / 2.4}
+    enableDamping dampingFactor={0.08} />;
+}
+
 export default function GameCanvas(props: GameProps) {
   return (
     <Canvas
       frameloop={props.paused ? "demand" : "always"}
       dpr={[1, 1.5]}
-      camera={{ fov: 58, near: 0.2, far: 2200, position: [0, 6, 12] }}
+      camera={{ fov: 58, near: 0.2, far: 6000, position: [0, 6, 12] }}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       fallback={
         <div className="fatal">
@@ -144,13 +165,14 @@ export default function GameCanvas(props: GameProps) {
       }
     >
       <color attach="background" args={["#d9e6df"]} />
-      <fog attach="fog" args={["#d9e6df", 300, 1250]} />
+      <fog attach="fog" args={["#d9e6df", props.cameraMode === 3 ? 1800 : 300, props.cameraMode === 3 ? 5000 : 1250]} />
       <ambientLight intensity={1.5} />
       <hemisphereLight args={["#eaf4ff", "#8a8c69", 1.3]} />
       <directionalLight position={[80, 150, 60]} intensity={2.5} />
       <Sky sunPosition={[80, 150, 60]} turbidity={4} rayleigh={0.4} />
       <CityWorld city={props.city} />
       <Simulation {...props} />
+      {props.cameraMode === 3 && <CityOverview city={props.city} paused={props.paused} />}
     </Canvas>
   );
 }

@@ -40,8 +40,13 @@ export PATH=/tmp/node-v22.16.0-darwin-arm64/bin:$PATH
 | A D / ← → | Steer |
 | Space | Handbrake / reduced lateral grip |
 | R | Reset at the initial spawn |
-| C | Chase, close, overhead camera |
+| C | Chase, close, overhead, city overview |
 | Esc | Pause / resume |
+
+Choose **Esplora dall’alto** in the opening menu to inspect the city: left-drag
+rotates, the wheel zooms and right-drag pans. **Torna alla guida** returns to the
+car; **Vista città** opens the overview again. Vehicle simulation freezes in the
+overview and resumes at its previous position when returning to driving.
 
 The menu controls camera distance and maximum forward speed (40–140 km/h).
 Losing window focus clears held keys and pauses the game. The HUD shows speed,
@@ -56,8 +61,8 @@ npm run osm:fetch -- /absolute/path/to/overpass.json
 ```
 
 The preprocessing query covers the centre around Piazza Castello and Piazza
-Mazzini: south/west/north/east `45.1318, 8.4435, 45.1430, 8.4625`.
-It downloads OSM ways through Overpass, saves a geographic GeoJSON intermediate,
+Mazzini: south/west/north/east `45.134, 8.446, 45.141, 8.457`.
+It tries the OSM map API first, with Overpass fallbacks, saves a geographic GeoJSON intermediate,
 then writes metric geometry and provenance to `public/data/`.
 The game never contacts Overpass while playing. Failed downloads exit nonzero
 and preserve the existing city file. With no valid local city file, the application
@@ -66,8 +71,11 @@ uses an explicitly labeled **Circuito di prova**, not fictional Casale geography
 One world unit is one metre. Coordinates use a local equirectangular projection
 centred at longitude 8.4524, latitude 45.1372, with X east, Y up and Z south.
 This is appropriate for the small initial area; use a projected CRS such as UTM
-32N before expanding significantly. Street widths come from `width`, then `lanes`,
-then defaults. Building heights use `height`, then `building:levels × 3.1 m`, then
+32N before expanding significantly. Street widths prefer `width:carriageway`, then `width`, then lane-based
+estimates, then defaults by road class and one-way tags. Explicit metric and
+feet measurements are parsed; access restrictions do not change physical width.
+Each road records `widthSource` so estimates remain distinguishable from measurements.
+Run `npm run osm:widths` to reprocess the bundled GeoJSON without a new download. Building heights use `height`, then `building:levels × 3.1 m`, then
 9.3 m. Heights are conservative visual estimates when OSM has no measurement.
 The spawn is selected from an actual accessible road segment, clear of buildings.
 Pedestrian/private roads use a distinct surface; access classification does not
@@ -82,11 +90,16 @@ Attribution appears in the HUD when real data is loaded. See
 
 - `src/components/GameCanvas.tsx`: renderer, car, fixed-step simulation and damped camera.
 - `src/components/HUD.tsx`: UI and canvas minimap, sampled at 10 Hz.
-- `src/game/physics.ts`: pure arcade physics at 120 Hz, conservative circular car
-  collision against building polygons; cached bounding boxes reject distant buildings.
+- `src/game/physics.ts`: pure arcade physics at 120 Hz.
+- `src/game/collision.ts`: oriented 2.1 × 4.2 m vehicle footprint, courtyard-aware
+  polygon contacts, bounded movement increments and axis-separated wall sliding.
+  Cached building bounds reject distant geometry; the circular helper is retained
+  only for conservative spawn clearance checks.
 - `src/game/input.ts`: keyboard state and focus-loss handling.
 - `src/geo/`: coordinate conversion, typed city model, loader and labeled test circuit.
-- `src/world/CityWorld.tsx`: extruded building footprints and merged road geometry.
+- `src/world/CityWorld.tsx`: area surfaces, merged roads and building batches.
+- `src/world/geometry.ts`: extruded footprints with courtyard holes, roof/wall colors
+  and static 200 m spatial batches for frustum culling.
 - `scripts/osm/`: reproducible download, conversion, spawn selection and provenance.
 - `tests/`: movement, steering, braking, collisions, projection and OSM tests.
 
@@ -98,31 +111,38 @@ intersection polygon unions and lane markings remain future work.
 ## Scope and limitations
 
 This is a prototype, not the full city or a complete GTA simulation. No traffic,
-pedestrians, audio, missions, gamepad or touch driving. Collision uses a conservative
-2.25 m circle, so tight gaps can be inaccessible. Camera does not avoid building
+pedestrians, audio, missions, gamepad or touch driving. Collision uses an oriented rectangle including wheel clearance. Translation and
+rotation are subdivided into increments of at most 0.2 m of combined travel at
+the outer corner. Sliding is an arcade approximation, not a rigid-body solver. Camera does not avoid building
 walls. Terrain is flat and there is no jumping, suspension, bridge or tunnel support.
-OSM multipolygon relations and courtyard holes are not supported yet; missing
-features are not invented. Buildings have simple flat roofs and no detailed façades.
+Assembled OSM multipolygons retain courtyard holes; incomplete relations are
+skipped. Buildings have simple flat roofs with illustrative terracotta colors
+and no detailed façades. Colors do not represent surveyed materials.
 
 Three.js frustum culling is active, but the initial district is loaded as a single
 local file. Chunk streaming, LOD and instanced vegetation are not implemented.
 There is no hardware-wide 60 FPS guarantee. The production bundle currently has a
 Vite size advisory for the 3D dependencies; it builds successfully.
 
-Next: improve intersection polygons and multipolygons, implement 200 × 200 m
-chunk streaming and a spatial collision index, then add terrain, vegetation,
+Next: improve intersection polygons, extend static batches into chunk streaming
+and implement a spatial collision index, then add terrain, vegetation,
 landmarks and broader city coverage.
 
-## Verification for this delivery
+## City rendering verification
 
-- Production build and fourteen automated regression tests pass.
-- Chrome manual smoke test: rendered 3D scene, forward acceleration, reverse,
-  camera switching, reset and pause verified using actual keyboard input.
-- OSM retrieval was attempted against two endpoints (HTTP 406 and 429), plus a
-  third mirror (90-second timeout). No real city dataset is bundled in this
-  delivery. Converter tests use synthetic fixtures explicitly confined to tests.
-- Full-city geography, FPS benchmarking and detailed collision/camera QA remain
-  outstanding; Milestone 2 is prepared but not complete.
+- The bundled real dataset contains 530 buildings, 406 road segments and 39 areas.
+  Source and licensing are recorded in `public/data/provenance.json`.
+- Production build and 28 automated tests pass, including raycasting checks for
+  open courtyards, roof elevation and finite bounds of the real city batches.
+  Collision tests cover narrow alleys, rotation near walls, frontal/reverse
+  contact, sliding, thin obstacles and whole-vehicle world bounds. Road tests
+  verify units, class/lanes/one-way estimates and consistency with bundled tags.
+- Chrome loaded the initial menu with the city overview rendered behind it.
+  Full orbit/zoom and overview-to-driving interaction checks remain outstanding:
+  the UI automation session was interrupted before those checks completed.
+- Buildings use static spatial batches, not streaming. Full-city coverage, FPS
+  benchmarking, detailed landmarks and camera collision remain outstanding.
+- Vite still reports the existing large-bundle advisory for the 3D dependencies.
 
 ## Fluidity update
 
