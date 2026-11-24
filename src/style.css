@@ -1,0 +1,487 @@
+:root {
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: #fff9ec;
+  background: #172824;
+  font-synthesis: none;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input {
+  font: inherit;
+}
+button,
+a,
+input {
+  touch-action: manipulation;
+}
+button {
+  cursor: pointer;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #ed9768;
+  outline-offset: 5px;
+}
+main {
+  height: 100dvh;
+  min-height: 540px;
+  position: relative;
+  overflow: hidden;
+}
+canvas {
+  display: block;
+}
+.game-canvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  outline: none;
+}
+.game-canvas ~ .fatal {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  padding: 32px;
+  background: #172824;
+  text-align: center;
+}
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    #11251a40,
+    transparent 27%,
+    transparent 65%,
+    #10221b70
+  );
+}
+header {
+  position: absolute;
+  top: 35px;
+  left: 42px;
+  right: 42px;
+  display: flex;
+  align-items: center;
+  gap: 50px;
+}
+.brand {
+  font-size: 30px;
+  letter-spacing: -1.6px;
+  font-weight: 800;
+  text-decoration: none;
+  color: inherit;
+}
+.brand span {
+  font-weight: 350;
+}
+.brand i {
+  font-size: 12px;
+  font-style: normal;
+  color: #ef925e;
+  margin-left: 5px;
+}
+.location {
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 650;
+}
+.location small {
+  display: block;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.7;
+  margin: 7px 0 0 13px;
+}
+.live-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #eaa678;
+  margin-right: 6px;
+}
+.pause-button {
+  pointer-events: auto;
+  margin-left: auto;
+  background: #17382d66;
+  border: 1px solid #ffffff35;
+  color: #fff9ec;
+  border-radius: 9px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-size: 13px;
+}
+kbd {
+  font-family: inherit;
+  font-size: 9px;
+  border: 1px solid #ffffff35;
+  border-radius: 4px;
+  padding: 4px 6px;
+  color: inherit;
+  white-space: nowrap;
+}
+.place-tag {
+  position: absolute;
+  top: 135px;
+  left: 43px;
+}
+.place-tag > span {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #f5cfad;
+}
+.place-tag h1 {
+  font-weight: 450;
+  letter-spacing: -1px;
+  font-size: 32px;
+  margin: 12px 0 8px;
+}
+.place-tag p {
+  font-size: 12px;
+  opacity: 0.75;
+  margin: 0;
+}
+.map-panel {
+  position: absolute;
+  bottom: 77px;
+  left: 42px;
+  width: 202px;
+  background: #20372fbd;
+  padding: 6px;
+  border: 1px solid #fff3;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.map-wrap {
+  position: relative;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.map-wrap canvas {
+  width: 100%;
+  height: auto;
+}
+.north {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  color: #31423a;
+  font-size: 11px;
+}
+.map-scale {
+  position: absolute;
+  bottom: 9px;
+  left: 11px;
+  color: #445247;
+  font-size: 8px;
+}
+.map-caption {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 8px 6px;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+}
+.drive-info {
+  position: absolute;
+  bottom: 87px;
+  right: 44px;
+  width: 250px;
+}
+.camera-label {
+  font-size: 10px;
+  text-align: right;
+  opacity: 0.8;
+  letter-spacing: 0.5px;
+}
+.camera-label kbd {
+  margin-left: 10px;
+}
+.speed {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 13px;
+  margin-top: 16px;
+}
+.speed strong {
+  font-size: 85px;
+  letter-spacing: -6px;
+  font-weight: 300;
+  line-height: 1.12;
+  font-variant-numeric: tabular-nums;
+}
+.speed > span:last-child {
+  font-size: 12px;
+  opacity: 0.7;
+}
+.gear {
+  font-size: 14px;
+  background: #ffffff16;
+  border: 1px solid #ffffff30;
+  padding: 6px 9px;
+  border-radius: 4px;
+}
+.speed-track {
+  height: 3px;
+  background: #fff3;
+  margin: 14px 0;
+}
+.speed-track i {
+  display: block;
+  height: 100%;
+  background: #f4a66d;
+  transition: width 0.1s;
+}
+.vehicle-status {
+  font-size: 9px;
+  display: flex;
+  justify-content: space-between;
+  opacity: 0.85;
+}
+.warn {
+  color: #ffad7a;
+}
+footer {
+  position: absolute;
+  left: 42px;
+  bottom: 28px;
+  display: flex;
+  gap: 22px;
+  font-size: 10px;
+  color: #fff9;
+}
+.attribution {
+  position: absolute;
+  right: 44px;
+  bottom: 28px;
+  font-size: 9px;
+  opacity: 0.65;
+}
+.attribution a {
+  color: inherit;
+  pointer-events: auto;
+  text-decoration: none;
+}
+.menu-backdrop {
+  position: absolute;
+  inset: 0;
+  background: #0d211b85;
+  backdrop-filter: blur(7px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.menu {
+  width: 430px;
+  background: #18332dee;
+  border: 1px solid #eee5d524;
+  border-radius: 20px;
+  padding: 35px 40px;
+  box-shadow: 0 30px 100px #071b2555;
+}
+.eyebrow {
+  font-size: 9px;
+  color: #ebac83;
+  letter-spacing: 3px;
+}
+.menu h2 {
+  font-size: 65px;
+  line-height: 0.98;
+  letter-spacing: -3px;
+  font-weight: 450;
+  margin: 24px 0;
+}
+.menu p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #c9d2c7;
+}
+.start {
+  width: 100%;
+  border: 0;
+  background: #ed9a6b;
+  color: #20372d;
+  padding: 17px 20px;
+  border-radius: 7px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 650;
+  margin: 24px 0;
+}
+.start:hover {
+  background: #ffb386;
+}
+.settings {
+  border-top: 1px solid #ffffff19;
+  padding-top: 8px;
+}
+.settings label {
+  display: block;
+  font-size: 11px;
+  margin: 14px 0;
+}
+.settings label span {
+  float: right;
+  color: #dbb598;
+}
+.settings input {
+  display: block;
+  width: 100%;
+  accent-color: #eda174;
+  height: 4px;
+  margin-top: 12px;
+}
+.menu-controls {
+  font-size: 10px;
+  line-height: 3;
+  color: #d4d9ce;
+  margin-top: 17px;
+}
+.menu-controls kbd {
+  margin-right: 4px;
+}
+.menu small {
+  display: block;
+  font-size: 9px;
+  color: #ffffff65;
+  margin-top: 15px;
+}
+.notice {
+  border-left: 2px solid #ed9a6b;
+  padding-left: 10px;
+  color: #efb68e;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.loading,
+.fatal {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.loading p {
+  font-size: 13px;
+  opacity: 0.6;
+}
+@media (max-width: 700px) {
+  header {
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    gap: 15px;
+  }
+  .brand {
+    font-size: 24px;
+  }
+  .location {
+    display: none;
+  }
+  .place-tag {
+    left: 20px;
+    top: 100px;
+  }
+  .place-tag h1 {
+    font-size: 25px;
+  }
+  .map-panel {
+    left: 20px;
+    bottom: 85px;
+    width: 145px;
+  }
+  .drive-info {
+    right: 20px;
+    bottom: 95px;
+    width: 175px;
+  }
+  .speed strong {
+    font-size: 60px;
+  }
+  footer {
+    left: 20px;
+    bottom: 47px;
+    gap: 10px;
+    font-size: 8px;
+  }
+  .attribution {
+    bottom: 17px;
+    right: 20px;
+  }
+  .menu {
+    width: min(90vw, 430px);
+    padding: 25px 30px;
+  }
+  .menu h2 {
+    font-size: 50px;
+  }
+  .pause-button span {
+    display: none;
+  }
+}
+@media (max-height: 740px) {
+  .menu {
+    padding: 22px 30px;
+  }
+  .menu h2 {
+    font-size: 48px;
+    margin: 16px 0;
+  }
+  .menu p {
+    margin: 8px 0;
+  }
+  .start {
+    margin: 16px 0;
+  }
+  .menu-controls {
+    margin-top: 8px;
+  }
+  .place-tag {
+    top: 110px;
+  }
+}
+
+.map-scale::after { content: ""; display: block; width: 52px; border-bottom: 2px solid #445247; margin-top: 3px; }
+@media(max-width:700px){ .map-scale::after { width:36px; } }
+
+.overview-button, .preview-city {
+  pointer-events: auto;
+  border: 1px solid #ffffff40;
+  background: #18332dcc;
+  color: #fff9ec;
+  border-radius: 7px;
+  padding: 12px 16px;
+  font-size: 12px;
+}
+.overview-button { margin-left: auto; }
+.overview-button + .pause-button { margin-left: 0; }
+.preview-city { width: 100%; display: flex; justify-content: space-between; margin: -10px 0 20px; }
+.overview-button:hover, .preview-city:hover { background: #355248; }
+.city-summary { position: absolute; right: 44px; bottom: 90px; text-align: right; }
+.city-summary > span { font-size: 10px; letter-spacing: 2px; color: #f5cfad; }
+.city-summary strong { display: block; font-size: 36px; font-weight: 400; margin: 12px 0; }
+.city-summary p { font-size: 13px; }
+.city-summary small { font-size: 10px; opacity: .7; }
+@media (max-width: 700px) {
+  .overview-button { padding: 12px 9px; }
+  .city-summary { right: 20px; bottom: 260px; }
+  .city-summary strong { font-size: 28px; }
+  .place-tag p { max-width: 280px; line-height: 1.6; }
+}
