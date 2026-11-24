@@ -61,7 +61,7 @@ export function testWorld(): City {
   };
 }
 export async function loadCity(): Promise<City> {
-  const response = await fetch("/data/city.json");
+  const response = await fetch(`${import.meta.env.BASE_URL}data/city.json`);
   if (!response.ok) throw new Error("Dati locali non disponibili");
   const city = (await response.json()) as City;
   if (!city.roads?.length || !city.buildings || !city.spawn || !city.bounds)

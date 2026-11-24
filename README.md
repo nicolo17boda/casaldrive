@@ -1,7 +1,8 @@
 # CasalDrive
 
-A local, lightweight arcade driving prototype built with Vite, React, TypeScript,
-Three.js, React Three Fiber and drei. Application code retains the existing GPL-3.0
+A local arcade driving prototype built with Vite, React, TypeScript and Babylon.js.
+Three.js is used only for polygon geometry preparation, not rendering.
+Application code retains the existing GPL-3.0
 license in `LICENSE`.
 
 Development priorities and acceptance criteria are tracked in [ROADMAP.md](ROADMAP.md).
@@ -33,6 +34,52 @@ recommended. For the current session only, that runtime can be used with:
 ```sh
 export PATH=/tmp/node-v22.16.0-darwin-arm64/bin:$PATH
 ```
+
+## Anteprima con Go Live (VS Code)
+
+Apri la cartella `casaldrive` in VS Code e installa l'estensione **Live Server**
+di Ritwick Dey, consigliata dal workspace. Dal terminale esegui:
+
+```sh
+npm install       # solo al primo avvio
+npm run build
+```
+
+Premi **Go Live** nella barra di stato e apri **http://127.0.0.1:5500/**.
+La configurazione `.vscode/settings.json` serve direttamente `dist/`.
+L'`index.html` nella radice è l'ingresso di Vite: Live Server non compila TSX.
+Usa il pulsante Go Live e l'URL sopra per aprire la versione compilata.
+
+Per ricompilare automaticamente durante le modifiche, lascia in esecuzione
+`npm run build:watch` mentre Go Live è attivo. In alternativa, `npm run dev`
+offre il server di sviluppo Vite su **http://localhost:5173**.
+
+## Motore 3D: Babylon.js
+
+Il rendering usa **Babylon.js 9.37.2**. È una scelta progettuale per evolvere un
+gioco 3D nel browser: offre scene, camere e un ecosistema per fisica, animazioni
+e risorse 3D. Non implica un miglioramento FPS misurato.
+
+| Opzione | Valutazione per CasalDrive |
+| --- | --- |
+| [Babylon.js](https://www.babylonjs.com/specifications/) | Scelto come motore di gioco 3D, con camere e gestione della scena integrate. |
+| [Three.js + Rapier](https://threejs.org/manual/pages/physics.html) | Alternativa valida e flessibile; richiede comporre i sistemi del gioco. Rapier è un motore fisico, non un renderer. |
+| [Phaser](https://phaser.io/oss/docs/phaser/getting-started/what-is-phaser) | Orientato al 2D; non adatto come base principale di questa città 3D. |
+
+Babylon gestisce effettivamente rendering WebGL, materiali, luci, nebbia, auto,
+camere di guida e camera orbitale. React gestisce menu e HUD. La triangolazione
+OSM già verificata usa ancora le utility geometriche di Three.js: i buffer vengono
+copiati una volta in mesh Babylon, conservando cortili, colori e scala metrica.
+React Three Fiber e drei sono stati rimossi.
+
+La fisica arcade a 120 Hz e le collisioni esistenti restano attive. Havok, WebGPU,
+sospensioni e rigid body non sono abilitati da questa migrazione. Non sono
+richiesti CDN o servizi esterni durante il gioco; la build funziona con Go Live.
+
+Verifica della migrazione: 41 test automatici, inclusi due test Babylon con
+NullEngine su geometrie, guida, pausa, reset, camere e rilascio della scena.
+La verifica visiva e delle prestazioni GPU resta da eseguire: il collegamento
+al browser non era disponibile nella sessione di migrazione.
 
 ## Controls
 
@@ -91,7 +138,8 @@ Attribution appears in the HUD when real data is loaded. See
 
 ## Architecture
 
-- `src/components/GameCanvas.tsx`: renderer, car, fixed-step simulation and damped camera.
+- `src/components/GameCanvas.tsx`: Babylon engine lifecycle, resizing, render loop and audio.
+- `src/game/babylonScene.ts`: car, fixed-step simulation, driving and overview cameras.
 - `src/components/HUD.tsx`: UI and canvas minimap, sampled at 10 Hz.
 - `src/game/physics.ts`: pure arcade physics at 120 Hz.
 - `src/game/collision.ts`: oriented 2.1 × 4.2 m vehicle footprint, courtyard-aware
@@ -106,7 +154,8 @@ Attribution appears in the HUD when real data is loaded. See
   mutes it). Audio starts after a keyboard/pointer gesture and fades out during
   pause, city overview and focus loss. No external audio assets are required.
 - `src/geo/`: coordinate conversion, typed city model, loader and labeled test circuit.
-- `src/world/CityWorld.tsx`: area surfaces, merged roads and building batches.
+- `src/world/babylonWorld.ts`: Babylon meshes, materials and geometry buffer conversion.
+- `src/world/roadsGeometry.ts`: merged road surfaces and joins.
 - `src/world/geometry.ts`: extruded footprints with courtyard holes, roof/wall colors
   and static 200 m spatial batches for frustum culling.
 - `scripts/osm/`: reproducible download, conversion, spawn selection and provenance.
@@ -132,7 +181,7 @@ Assembled OSM multipolygons retain courtyard holes; incomplete relations are
 skipped. Buildings have simple flat roofs with illustrative terracotta colors
 and no detailed façades. Colors do not represent surveyed materials.
 
-Three.js frustum culling is active, but the initial district is loaded as a single
+Babylon.js frustum culling is active, but the initial district is loaded as a single
 local file. Chunk streaming, LOD and instanced vegetation are not implemented.
 There is no hardware-wide 60 FPS guarantee. The production bundle currently has a
 Vite size advisory for the 3D dependencies; it builds successfully.
