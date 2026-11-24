@@ -8,11 +8,38 @@ import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { VertexBuffer } from '@babylonjs/core/Buffers/buffer';
 import { Material } from '@babylonjs/core/Materials/material';
 import { buildingChunks } from '../src/world/geometry';
-import { geometryMesh } from '../src/world/babylonWorld';
+import { createCityWorld, geometryMesh } from '../src/world/babylonWorld';
 import { createGameScene, type GameProps } from '../src/game/babylonScene';
 import { createVehicle } from '../src/game/physics';
 import { controls } from '../src/game/input';
 import type { City } from '../src/geo/types';
+
+test('area batches preserve holes, separate materials and world-space culling bounds', () => {
+  const engine = new NullEngine();
+  const scene = new Scene(engine);
+  scene.useRightHandedSystem = true;
+  try {
+    const city: City = { name: 'areas', real: false, origin: [0, 0], roads: [], buildings: [],
+      spawn: { x: 0, z: 0, yaw: 0 }, bounds: [0, 0, 100, 100], areas: [
+        { id: 1, kind: 'green', points: [[0,0],[20,0],[20,20],[0,20]], holes: [[[5,5],[15,5],[15,15],[5,15]]] },
+        { id: 2, kind: 'green', points: [[30,0],[40,0],[40,10],[30,10]] },
+        { id: 3, kind: 'water', points: [[50,0],[60,0],[60,10],[50,10]] },
+      ] };
+    createCityWorld(scene, city);
+    const areas = scene.meshes.filter(mesh => mesh.name.startsWith('areas-'));
+    assert.equal(areas.length, 2);
+    const green = areas.find(mesh => mesh.material?.name === 'green')!;
+    const water = areas.find(mesh => mesh.material?.name === 'water')!;
+    assert.ok(green && water);
+    const rayAt = (x: number, z: number) => new Ray(new Vector3(x, 30, z), new Vector3(0,-1,0));
+    assert.equal(rayAt(10, 10).intersectsMesh(green).hit, false);
+    assert.ok(rayAt(2, 2).intersectsMesh(green).hit);
+    assert.ok(rayAt(35, 5).intersectsMesh(green).hit);
+    assert.ok(rayAt(55, 5).intersectsMesh(water).hit);
+    assert.equal(green.getBoundingInfo().boundingBox.maximumWorld.x, 40);
+    assert.equal(green.alwaysSelectAsActiveMesh, false);
+  } finally { scene.dispose(); engine.dispose(); }
+});
 
 test('Babylon geometry retains roof elevation, open courtyards, normals and vertex colors', () => {
   const engine = new NullEngine();
@@ -22,7 +49,10 @@ test('Babylon geometry retains roof elevation, open courtyards, normals and vert
     const [{ geometry }] = buildingChunks([{ id: 1, height: 12,
       points: [[0,0],[20,0],[20,20],[0,20]], holes: [[[5,5],[15,5],[15,15],[5,15]]],
     }]);
+    const sourceVertices = geometry.getAttribute('position').count;
     const mesh = geometryMesh(scene, 'building', geometry);
+    assert.ok(mesh.getTotalVertices() < sourceVertices);
+    assert.equal(mesh.getTotalIndices(), sourceVertices); // No triangles removed.
     assert.equal(mesh.sideOrientation, Material.CounterClockWiseSideOrientation);
     mesh.computeWorldMatrix(true);
     assert.equal(mesh.getBoundingInfo().boundingBox.maximumWorld.y, 12);
@@ -32,6 +62,11 @@ test('Babylon geometry retains roof elevation, open courtyards, normals and vert
     assert.ok(Math.abs(hit.pickedPoint!.y - 12) < 1e-6);
     assert.equal(mesh.getVerticesData(VertexBuffer.ColorKind)!.length, mesh.getTotalVertices() * 4);
     assert.equal(mesh.getVerticesData(VertexBuffer.NormalKind)!.length, mesh.getTotalVertices() * 3);
+    const normals = mesh.getVerticesData(VertexBuffer.NormalKind)!;
+    const colors = mesh.getVerticesData(VertexBuffer.ColorKind)!;
+    const roof = Array.from({ length: mesh.getTotalVertices() }, (_, i) => i).find(i => normals[i * 3 + 1] > .99)!;
+    const wall = Array.from({ length: mesh.getTotalVertices() }, (_, i) => i).find(i => Math.abs(normals[i * 3 + 1]) < .01)!;
+    assert.notEqual(colors[roof * 4], colors[wall * 4]);
   } finally { scene.dispose(); engine.dispose(); }
 });
 

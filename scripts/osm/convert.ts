@@ -83,10 +83,11 @@ export function convert(
       });
     } else if (
       closed &&
-      (t.leisure === "park" ||
-        t.landuse === "grass" ||
-        t.natural === "wood" ||
+      (["park", "garden", "recreation_ground"].includes(t.leisure) ||
+        ["grass", "meadow", "forest", "village_green", "recreation_ground"].includes(t.landuse) ||
+        ["wood", "scrub", "grassland"].includes(t.natural) ||
         t.natural === "water" ||
+        t.waterway === "riverbank" ||
         t.highway === "pedestrian" ||
         t.amenity === "parking" || t.place === "square")
     ) {
@@ -96,7 +97,7 @@ export function convert(
         holes: e.holes?.map(ring => ring.map(p => project(p.lon, p.lat))),
         name: t.name,
         kind:
-          t.natural === "water"
+          t.natural === "water" || t.waterway === "riverbank"
             ? "water"
             : t.highway === "pedestrian" || t.amenity === "parking" || t.place === "square"
               ? "square"
@@ -150,7 +151,7 @@ export function geojson(elements: OsmWay[]) {
             e.tags?.landuse ||
             e.tags?.leisure ||
             e.tags?.area === "yes" ||
-            e.tags?.natural || e.tags?.place === "square");
+            e.tags?.natural || e.tags?.waterway === "riverbank" || e.tags?.place === "square");
         return {
           type: "Feature",
           id: e.sourceId ?? `way/${e.id}`,

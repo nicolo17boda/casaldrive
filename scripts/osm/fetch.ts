@@ -1,11 +1,9 @@
 import { mkdir, writeFile, rename, readFile } from "node:fs/promises";
 import { convert, geojson, type OsmWay } from "./convert";
 import { normalize } from "./normalize";
-// South, west, north, east: central Casale, including Piazza Castello and Piazza Mazzini.
-const bbox: [number, number, number, number] = [
-  45.134, 8.446, 45.141, 8.457,
-];
-const query = `[out:json][timeout:60];(way[highway](${bbox});way[building](${bbox});way[leisure=park](${bbox});way[landuse=grass](${bbox});way[natural=water](${bbox});way[amenity=parking](${bbox}););out geom;`;
+import { parseBbox, overpassQuery } from './region';
+const bbox = parseBbox(process.env.OSM_BBOX);
+const query = overpassQuery(bbox);
 const apiUrl = `https://api.openstreetmap.org/api/0.6/map.json?bbox=${bbox[1]},${bbox[0]},${bbox[3]},${bbox[2]}`;
 const endpoints = [
   apiUrl,
@@ -54,7 +52,7 @@ async function main() {
     JSON.stringify(
       {
         source,
-        query: source.includes("map.json") ? null : query,
+        query: source.includes("overpass") ? query : null,
         bbox,
         downloadedAt: new Date().toISOString(),
         osm3s: raw.osm3s,
@@ -64,6 +62,7 @@ async function main() {
         projection:
           "Local equirectangular, WGS84 radius 6378137, X east / Z south, metres",
         origin: city.origin,
+        counts: { roads: city.roads.length, buildings: city.buildings.length, areas: city.areas.length },
         limitations:
           "OSM polygons and assembled multipolygon courtyards. Incomplete relations skipped. Flat terrain; no bridge/tunnel geometry. Heights estimated where absent.",
       },

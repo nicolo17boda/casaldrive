@@ -16,6 +16,16 @@ export function buildMinimap(city: City) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.scale(scale, scale);
   ctx.translate(-originX, -originZ);
+  // Match the world's parks, squares and water before drawing buildings/roads.
+  for (const area of city.areas) {
+    ctx.fillStyle = area.kind === 'water' ? '#83a6ad' : area.kind === 'green' ? '#a3b58a' : '#d4cebc';
+    ctx.beginPath();
+    for (const ring of [area.points, ...(area.holes ?? [])]) {
+      ring.forEach(([x, z], i) => i ? ctx.lineTo(x, z) : ctx.moveTo(x, z));
+      ctx.closePath();
+    }
+    ctx.fill('evenodd');
+  }
   ctx.fillStyle = '#bdc1af';
   for (const building of city.buildings) {
     ctx.beginPath();

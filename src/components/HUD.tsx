@@ -115,14 +115,15 @@ export default function HUD({
           <span className="map-scale">100 m</span>
         </div>
         <div className="map-caption">
-          <span>{city.real ? "CENTRO STORICO" : "TEST DRIVE"}</span>
+          <span>{city.real ? "CASALE E DINTORNI" : "TEST DRIVE"}</span>
           <b>↗</b>
         </div>
       </div>
       {cameraMode === 3 ? <div className="city-summary">
-        <span>{city.real ? "CENTRO STORICO · SCALA 1:1" : "CIRCUITO DIMOSTRATIVO"}</span>
+        <span>{city.real ? "CENTRO E DINTORNI · SCALA 1:1" : "CIRCUITO DIMOSTRATIVO"}</span>
         <strong>{city.buildings.length} edifici</strong>
         <p>{city.roads.length} tratti stradali · {city.areas.length} aree</p>
+        <p>{((city.bounds[2] - city.bounds[0]) / 1000).toFixed(1)} × {((city.bounds[3] - city.bounds[1]) / 1000).toFixed(1)} km da esplorare</p>
         <small>Volumi semplificati · altezze stimate dove assenti</small>
       </div> : <div className="drive-info">
         <div className="camera-label">

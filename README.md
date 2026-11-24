@@ -23,6 +23,7 @@ network access at install time; gameplay uses only local assets.
 ```sh
 npm test          # physics and OSM conversion regression tests
 npm run benchmark # repeatable CPU simulation and camera collision measurements
+npm run benchmark:scene # Babylon static mesh counts and geometry buffer sizes
 npm run build    # strict TypeScript check + production bundle in dist/
 npm run preview  # serve the production build
 ```
@@ -81,6 +82,75 @@ NullEngine su geometrie, guida, pausa, reset, camere e rilascio della scena.
 La verifica visiva e delle prestazioni GPU resta da eseguire: il collegamento
 al browser non era disponibile nella sessione di migrazione.
 
+## Ottimizzazioni Babylon
+
+La scena applica le [ottimizzazioni documentate da Babylon](https://doc.babylonjs.com/features/featuresDeepDive/scene/optimize_your_scene/):
+
+- Mesh statiche con matrici e bounding box già calcolati; il frustum culling resta
+  attivo mentre l'auto attraversa la città.
+- Superfici dello stesso materiale raggruppate in celle da 200 metri, vertici
+  duplicati unificati conservando normali e colori, indici a 16 bit dove possibile.
+- Materiali congelati dopo la preparazione degli shader. Le luci dei freni restano
+  modificabili; cambio camera e ripristino del contesto GPU riabilitano la preparazione.
+- Picking automatico disattivato: i comandi operano sul canvas, non sulle mesh.
+- Ciclo Babylon arrestato in pausa o con scheda nascosta. Riparte per modifiche,
+  resize, ritorno alla scheda e ripristino GPU, senza recuperare tempo di simulazione
+  trascorso in pausa. Il caricamento iniziale degli shader completa il primo frame.
+
+Sul dataset incluso, il [confronto riproducibile](docs/benchmarks/2026-11-24-babylon.json)
+registra **66 → 47 mesh statiche**, **138.058 → 60.693 vertici** e
+**4.929.992 → 2.307.712 byte di buffer geometrici** (-53,19%). I **46.330 triangoli**
+restano invariati. Si tratta di dati della geometria, non di misure della memoria
+GPU totale o degli FPS. La compattazione aggiunge un passaggio di preparazione
+all'avvio per ridurre i dati mantenuti durante il gioco.
+
+`npm run benchmark:scene` ripete la misura sul dataset corrente senza richiedere
+WebGL. La suite comprende 44 test: include cortili, materiali e limiti dei batch,
+conservazione dei triangoli e arresto/ripresa del render loop. La verifica visiva,
+dei tempi GPU e del ripristino reale del contesto resta da eseguire nel browser.
+
+## Primo aggiornamento grafico
+
+Le carreggiate usano asfalto antracite quasi nero, con texture di grana e normal
+map procedurali da 256 × 256 pixel, generate localmente senza download. Le UV
+seguono le coordinate della città con ripetizione ogni quattro metri: il disegno
+resta continuo fra tratti stradali e incroci. Mipmap e filtro anisotropico 4×
+limitano lo scintillio a distanza; percorsi pedonali e piazze restano distinti.
+
+La luce solare è calda, il riempimento ambientale è azzurro e la resa usa tone
+mapping ACES. Vernice e vetri dell'auto hanno riflessi speculari differenziati.
+Su renderer compatibili, due cascades da 1024 pixel producono ombre filtrate di
+edifici e auto entro 180 metri dalla camera di guida. La panoramica disattiva le
+ombre; i renderer senza supporto CSM mantengono illuminazione e materiali.
+Le ombre aggiungono passaggi GPU: gli FPS non sono stati misurati.
+
+Build completata e 45 test superati, incluso il controllo delle UV agli incroci.
+Verifica visiva effettuata in Chrome su Go Live nella visuale di guida iniziale:
+asfalto, texture e ombre sono visibili. Il benchmark geometrico precedente alle
+texture resta un confronto storico; `npm run benchmark:scene` include ora anche
+le UV aggiunte, ma non misura texture e shadow map.
+
+## Mappa ampliata — 24 novembre 2026
+
+Nuovo download OpenStreetMap: **1.679 edifici, 1.205 tratti stradali e 136 aree**,
+rispetto ai precedenti 530, 406 e 39. Comprende, fra gli altri, Giardini Egidio
+Ortona, Giardino Marta Tenani, Giardini Buzzi e nuove piazze. Lo spawn resta su
+una strada libera nei pressi di Piazza Castello. Le geometrie complete possono
+estendersi oltre il rettangolo giocabile: non vengono tagliati edifici o cortili.
+
+Importazione estesa a giardini, prati, boschi e riverbank. Il fallback Overpass
+richiede anche i membri delle relazioni; anelli incompleti sono scartati per
+non chiudere erroneamente cortili. La minimappa distingue verde, acqua e piazze.
+La camera panoramica usa un piano vicino più distante per migliorare la precisione
+della profondità sulle superfici stradali quando si osserva l'intera città.
+
+Il [report prima/dopo](docs/benchmarks/2026-11-24-map-expansion.json) registra
+164 mesh statiche e 7,65 MB di buffer geometrici nella nuova area. I test CPU
+restano riproducibili; non sono una misura degli FPS e i campioni stradali sono
+diversi fra le due mappe. 49 test e build superati. Verificata in Chrome la
+vista d'insieme tramite Go Live. Streaming, terreno altimetrico, ponti e tunnel
+restano esclusi; le relazioni idriche incomplete possono lasciare acqua mancante.
+
 ## Controls
 
 | Key | Action |
@@ -110,8 +180,10 @@ npm run osm:fetch
 npm run osm:fetch -- /absolute/path/to/overpass.json
 ```
 
-The preprocessing query covers the centre around Piazza Castello and Piazza
-Mazzini: south/west/north/east `45.134, 8.446, 45.141, 8.457`.
+The preprocessing query covers the centre and surrounding neighbourhoods:
+south/west/north/east `45.130, 8.440, 45.145, 8.464`. The playable bounds are
+approximately 1.9 × 1.7 km (4.68 times the original bounding-box area).
+Override the region with `OSM_BBOX="south,west,north,east" npm run osm:fetch`.
 It tries the OSM map API first, with Overpass fallbacks, saves a geographic GeoJSON intermediate,
 then writes metric geometry and provenance to `public/data/`.
 The game never contacts Overpass while playing. Failed downloads exit nonzero
@@ -191,7 +263,7 @@ improve intersection polygons, then extend static batches into chunk streaming.
 Terrain, vegetation, landmarks and broader city coverage follow those foundations.
 See [ROADMAP.md](ROADMAP.md) for the ordered development blocks.
 
-## City rendering verification
+## City rendering verification (initial dataset)
 
 - The bundled real dataset contains 530 buildings, 406 road segments and 39 areas.
   Source and licensing are recorded in `public/data/provenance.json`.

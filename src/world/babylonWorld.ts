@@ -6,8 +6,10 @@ import { Material } from '@babylonjs/core/Materials/material';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import type { Scene } from '@babylonjs/core/scene';
 import { ShapeGeometry, type BufferGeometry } from 'three';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { buildingChunks, shape } from './geometry';
 import { roadsGeometry } from './roadsGeometry';
+import { asphaltTextures } from './asphalt';
 import type { City } from '../geo/types';
 
 export function material(scene: Scene, name: string, color: string) {
@@ -19,6 +21,11 @@ export function material(scene: Scene, name: string, color: string) {
 
 /** Keep the proven polygon triangulation, uploading its buffers to Babylon once. */
 export function geometryMesh(scene: Scene, name: string, geometry: BufferGeometry) {
+  // Merge only vertices whose complete attributes match: roof/wall normals and
+  // colors remain separate, so sharp edges and courtyard geometry are preserved.
+  const compact = mergeVertices(geometry, 1e-6);
+  geometry.dispose();
+  geometry = compact;
   const mesh = new Mesh(name, scene);
   // Three's buffers have right-handed, counterclockwise triangles; Babylon's
   // procedural primitives use the opposite convention even in a RH scene.
@@ -27,14 +34,18 @@ export function geometryMesh(scene: Scene, name: string, geometry: BufferGeometr
   const positions = geometry.getAttribute('position');
   vertices.positions = Float32Array.from(positions.array);
   vertices.normals = Float32Array.from(geometry.getAttribute('normal').array);
-  vertices.indices = geometry.index
-    ? Uint32Array.from(geometry.index.array)
-    : Uint32Array.from({ length: positions.count }, (_, i) => i);
+  const uv = geometry.getAttribute('uv');
+  if (uv) vertices.uvs = Float32Array.from(uv.array);
+  const IndexArray = positions.count <= 65536 ? Uint16Array : Uint32Array;
+  vertices.indices = IndexArray.from(geometry.index!.array);
   const colors = geometry.getAttribute('color');
   if (colors) {
     const rgba = new Float32Array(colors.count * 4);
     for (let i = 0; i < colors.count; i++) {
-      rgba.set([colors.getX(i), colors.getY(i), colors.getZ(i), 1], i * 4);
+      rgba[i * 4] = colors.getX(i);
+      rgba[i * 4 + 1] = colors.getY(i);
+      rgba[i * 4 + 2] = colors.getZ(i);
+      rgba[i * 4 + 3] = 1;
     }
     vertices.colors = rgba;
   }
@@ -42,6 +53,8 @@ export function geometryMesh(scene: Scene, name: string, geometry: BufferGeometr
   geometry.dispose();
   mesh.isPickable = false;
   mesh.freezeWorldMatrix();
+  mesh.doNotSyncBoundingInfo = true;
+  mesh.receiveShadows = true;
   return mesh;
 }
 
@@ -50,22 +63,43 @@ export function createCityWorld(scene: Scene, city: City) {
   ground.material = material(scene, 'ground-material', '#c5c5ae');
   ground.isPickable = false;
   ground.freezeWorldMatrix();
+  ground.doNotSyncBoundingInfo = true;
+  ground.receiveShadows = true;
   const areaMaterials = {
     green: material(scene, 'green', '#7f9569'),
     water: material(scene, 'water', '#83a6ad'),
     paved: material(scene, 'paved', '#bbb4a3'),
   };
+  const areaBatches = new Map<string, { kind: City['areas'][number]['kind']; parts: BufferGeometry[] }>();
   for (const area of city.areas) {
     const geometry = new ShapeGeometry(shape(area.points, area.holes));
     geometry.rotateX(-Math.PI / 2);
     geometry.translate(0, 0.025, 0);
-    const mesh = geometryMesh(scene, `area-${area.id}`, geometry);
-    mesh.material = area.kind === 'green' ? areaMaterials.green
-      : area.kind === 'water' ? areaMaterials.water : areaMaterials.paved;
+    geometry.computeBoundingBox();
+    const bounds = geometry.boundingBox!;
+    // Same 200 m grid as buildings; retain useful frustum culling when driving.
+    const key = `${area.kind}-${Math.floor((bounds.min.x + bounds.max.x) / 400)},${Math.floor((bounds.min.z + bounds.max.z) / 400)}`;
+    const batch = areaBatches.get(key) ?? { kind: area.kind, parts: [] };
+    batch.parts.push(geometry);
+    areaBatches.set(key, batch);
+  }
+  for (const [key, { kind, parts }] of areaBatches) {
+    const merged = mergeGeometries(parts, false)!;
+    parts.forEach(part => part.dispose());
+    const mesh = geometryMesh(scene, `areas-${key}`, merged);
+    mesh.material = kind === 'green' ? areaMaterials.green
+      : kind === 'water' ? areaMaterials.water : areaMaterials.paved;
   }
   for (const drivable of [false, true]) {
     const mesh = geometryMesh(scene, drivable ? 'roads' : 'paths', roadsGeometry(city, drivable));
-    const surface = material(scene, `${mesh.name}-material`, drivable ? '#626b68' : '#bcb5a5');
+    const surface = material(scene, `${mesh.name}-material`, drivable ? '#303238' : '#bcb5a5');
+    if (drivable) {
+      const textures = asphaltTextures(scene);
+      surface.diffuseTexture = textures.diffuse;
+      surface.bumpTexture = textures.normal;
+      surface.specularColor.set(0.025, 0.025, 0.025);
+      surface.specularPower = 48;
+    }
     surface.backFaceCulling = false;
     mesh.material = surface;
   }

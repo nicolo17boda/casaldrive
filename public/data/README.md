@@ -25,5 +25,14 @@ unchanged. The same policy is used by future `osm:fetch` conversions.
 Width precedence is `width:carriageway`, `width`, lane-based estimates, then
 road-class/one-way defaults. These estimates are illustrative carriageway widths,
 not surveyed curb positions, and exclude inferred sidewalks/parking lanes.
-Both the 3D surfaces and the minimap use these same widths. In this dataset only
-Via Duomo has an explicit width (4 m); all other widths are estimated.
+Both the 3D surfaces and the minimap use these same widths. Via Duomo retains its explicit width (4 m); `widthSource` identifies measured
+versus estimated widths for every road in the expanded dataset.
+
+## Expanded region
+
+Default bounds: south 45.130, west 8.440, north 45.145, east 8.464.
+The 24 November update contains 1,679 buildings, 1,205 road segments and
+136 areas. Source URL, download timestamp and counts are in `provenance.json`.
+Use `OSM_BBOX="south,west,north,east" npm run osm:fetch` for a different region.
+The source includes complete ways beyond the playable bounds; incomplete
+multipolygon relations are skipped rather than inventing missing geometry.

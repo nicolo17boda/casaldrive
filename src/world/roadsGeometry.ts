@@ -34,6 +34,13 @@ export function roadsGeometry(city: City, drivable: boolean) {
   }
   const g = new BufferGeometry();
   g.setAttribute("position", new Float32BufferAttribute(vertices, 3));
+  // World-aligned repeats every four metres, continuous across road junctions.
+  const uv = new Float32Array(vertices.length / 3 * 2);
+  for (let i = 0; i < vertices.length / 3; i++) {
+    uv[i * 2] = vertices[i * 3] / 4;
+    uv[i * 2 + 1] = vertices[i * 3 + 2] / 4;
+  }
+  g.setAttribute('uv', new Float32BufferAttribute(uv, 2));
   g.computeVertexNormals();
   return g;
 }

@@ -10,6 +10,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --import tsx --test tests/*.test.ts",
     "benchmark": "node --import tsx scripts/benchmark.ts",
+    "benchmark:scene": "node --import tsx scripts/benchmarkScene.ts",
     "osm:fetch": "node --import tsx scripts/osm/fetch.ts",
     "osm:widths": "node --import tsx scripts/osm/widths.ts"
   },

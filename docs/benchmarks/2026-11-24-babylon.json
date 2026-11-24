@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-24",
+  "datasetSha256": "66dfc89db4e2ca635665b0c9813c323d2a855135d0bae1e42c82786ef4418f87",
+  "before": {
+    "meshes": 66,
+    "vertices": 138058,
+    "triangles": 46330,
+    "bufferBytes": 4929992
+  },
+  "after": {
+    "meshes": 47,
+    "vertices": 60693,
+    "triangles": 46330,
+    "bufferBytes": 2307712
+  },
+  "reductionPercent": {
+    "meshes": 28.79,
+    "vertices": 56.04,
+    "triangles": 0.0,
+    "bufferBytes": 53.19
+  },
+  "limitations": "Geometry buffer sizes and mesh counts only. No GPU, frame-time, actual draw-call or FPS measurement."
+}

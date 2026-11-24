@@ -1,0 +1,118 @@
+{
+  "date": "2026-11-24",
+  "before": {
+    "scene": {
+      "datasetSha256": "66dfc89db4e2ca635665b0c9813c323d2a855135d0bae1e42c82786ef4418f87",
+      "staticCity": {
+        "meshes": 47,
+        "vertices": 60693,
+        "triangles": 46330,
+        "bufferBytes": 2793224
+      },
+      "limitations": "Geometry buffer sizes and mesh counts only. No GPU, frame-time, actual draw-call or FPS measurement."
+    },
+    "cpu": {
+      "scenario": "spawn-input-replay-v1",
+      "simulatedSecondsPerRound": 60,
+      "rounds": 5,
+      "runtime": "v22.16.0",
+      "platform": "darwin",
+      "arch": "arm64",
+      "cpu": "Apple M4",
+      "datasetSha256": "66dfc89db4e2ca635665b0c9813c323d2a855135d0bae1e42c82786ef4418f87",
+      "buildings": 530,
+      "finalState": {
+        "x": -332.4988191344461,
+        "z": -5.408227562229297,
+        "yaw": 25.53854816669204,
+        "distanceMetres": 701.1583757898143,
+        "contactTicks": 424,
+        "cameraCorrections": 0
+      },
+      "physics": {
+        "samples": 36000,
+        "meanMs": 0.0006650377222222587,
+        "p50Ms": 0.00045800000000895125,
+        "p95Ms": 0.0014170000000035543,
+        "p99Ms": 0.002083999999996422,
+        "maxMs": 0.24795800000001122
+      },
+      "cameraCollision": {
+        "samples": 36000,
+        "meanMs": 0.0023552926944443798,
+        "p50Ms": 0.00016600000000721593,
+        "p95Ms": 0.021916000000004487,
+        "p99Ms": 0.022582999999997355,
+        "maxMs": 0.0872500000000116
+      },
+      "roadCameraProbes": {
+        "samples": 7012,
+        "meanMs": 0.008012307187678177,
+        "p50Ms": 0.00050000000004502,
+        "p95Ms": 0.037082999999995536,
+        "p99Ms": 0.07049999999998136,
+        "maxMs": 0.36354199999999537,
+        "corrections": 2206
+      },
+      "limitations": "CPU-only, warm-cache replay; no rendering, browser, GPU or FPS measurement. Timings include timer overhead. Camera collision queried at every physics tick for this benchmark."
+    }
+  },
+  "after": {
+    "scene": {
+      "datasetSha256": "22d63eb6a228c1b26352df19b3b7a4642c9723dd44d2736a07e1b2c743c81f54",
+      "staticCity": {
+        "meshes": 164,
+        "vertices": 171729,
+        "triangles": 134738,
+        "bufferBytes": 7650936
+      },
+      "limitations": "Geometry buffer sizes and mesh counts only. No GPU, frame-time, actual draw-call or FPS measurement."
+    },
+    "cpu": {
+      "scenario": "spawn-input-replay-v1",
+      "simulatedSecondsPerRound": 60,
+      "rounds": 5,
+      "runtime": "v22.16.0",
+      "platform": "darwin",
+      "arch": "arm64",
+      "cpu": "Apple M4",
+      "datasetSha256": "22d63eb6a228c1b26352df19b3b7a4642c9723dd44d2736a07e1b2c743c81f54",
+      "buildings": 1679,
+      "finalState": {
+        "x": -327.25093890626835,
+        "z": 0.08912533525219611,
+        "yaw": 25.691195810524718,
+        "distanceMetres": 737.9974893781701,
+        "contactTicks": 283,
+        "cameraCorrections": 0
+      },
+      "physics": {
+        "samples": 36000,
+        "meanMs": 0.0005738583888888983,
+        "p50Ms": 0.00041699999999877946,
+        "p95Ms": 0.0012499999999988631,
+        "p99Ms": 0.003084000000001197,
+        "maxMs": 0.09491699999999526
+      },
+      "cameraCollision": {
+        "samples": 36000,
+        "meanMs": 0.0005814828055555345,
+        "p50Ms": 0.00012500000002546585,
+        "p95Ms": 0.0017919999999946867,
+        "p99Ms": 0.01300000000000523,
+        "maxMs": 0.10104099999999505
+      },
+      "roadCameraProbes": {
+        "samples": 24432,
+        "meanMs": 0.004008129666011758,
+        "p50Ms": 0.0002910000000042601,
+        "p95Ms": 0.02258399999999483,
+        "p99Ms": 0.04629099999999653,
+        "maxMs": 0.1541249999999934,
+        "corrections": 4341
+      },
+      "limitations": "CPU-only, warm-cache replay; no rendering, browser, GPU or FPS measurement. Timings include timer overhead. Camera collision queried at every physics tick for this benchmark."
+    }
+  },
+  "limitations": "CPU and geometry measurements only. Different road probe populations after expansion; not a controlled speedup comparison. No frame-time/FPS benchmark, streaming or full-city coverage."
+}

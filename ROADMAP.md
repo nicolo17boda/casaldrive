@@ -76,3 +76,16 @@ Ogni incremento deve restare giocabile, includere controlli pertinenti e aggiorn
 questa roadmap. Nessuna espansione geografica prima delle misure del blocco 1.
 La città è attualmente statica: per cambiare edifici a runtime occorre sostituire
 l'array e gli oggetti modificati, così da ricostruire indice e limiti memorizzati.
+
+## Incremento richiesto — 24 novembre 2026
+
+Su richiesta esplicita di ampliare la mappa, esteso il rettangolo giocabile a
+circa 1,9 × 1,7 km, mantenendo il caricamento locale statico. Nuovi dati OSM:
+1.679 edifici, 1.205 tratti stradali e 136 aree; importazione migliorata per
+verde, acqua e multipoligoni incompleti. Minimap aggiornata con le superfici.
+49 test e build superati; controllata la panoramica in Chrome con Go Live.
+Confronto CPU e buffer salvato in `docs/benchmarks/2026-11-24-map-expansion.json`.
+Questo incremento anticipa l'espansione prevista dal blocco 3 per richiesta
+dell'utente: non chiude i requisiti su streaming, tempi GPU o FPS. Prossimo
+passo: percorso di misura ripetibile nei quartieri aggiunti e gestione dei
+confini, prima di ampliare ulteriormente il territorio.
