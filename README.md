@@ -221,7 +221,7 @@ Attribution appears in the HUD when real data is loaded. See
   only for conservative spawn clearance checks.
 - `src/game/input.ts`: keyboard state and focus-loss handling.
 - `src/game/engineModel.ts` and `engineAudio.ts`: procedural inline-four engine
-  audio with five simulated automatic gears, launch clutch slip, reverse,
+  audio with eight simulated automatic gears, launch clutch slip, reverse,
   combustion harmonics and intake noise. The menu controls engine volume (zero
   mutes it). Audio starts after a keyboard/pointer gesture and fades out during
   pause, city overview and focus loss. No external audio assets are required.
@@ -298,3 +298,22 @@ four camera directions. The stored [measurement](docs/benchmarks/2026-11-17.json
 includes 36,000 simulation ticks and 7,012 road camera probes (2,206 retractions).
 This measures CPU work only, not rendering or FPS; timer overhead is included.
 The latest browser opening reported WebGL unavailable, so visual checks remain pending.
+
+
+## Mercedes-AMG A 45 S — modello e audio
+
+L'auto è un modello procedurale stilizzato ispirato alla W177: carrozzeria grigio
+metallizzato, griglia verticale con stella, fari LED, tetto nero, spoiler,
+diffusore, quattro scarichi e cerchi a dieci razze con pinze rosse. I dettagli
+rigidi sono raggruppati per materiale; sterzo e rotazione delle ruote restano
+indipendenti. Le proporzioni sono adattate all'ingombro delle collisioni arcade.
+
+L'audio sintetizza un quattro cilindri turbo con otto rapporti approssimati,
+regime massimo di 7.200 giri, risonanza dello scarico, aspirazione dipendente
+dal carico, salita progressiva della pressione turbo, sfiato in rilascio e
+un breve taglio con impulso sonoro in cambiata. Volume, pausa e attivazione
+tramite gesto utente restano disponibili. Non è un campionamento del motore
+reale e non modifica le prestazioni della fisica di guida.
+
+Riferimento per architettura motore e cambio:
+[Mercedes-Benz, A 45 S e cambio DCT a otto rapporti](https://media.mercedes-benz.com/en/article/7a4be9a5-cfdf-4fe2-b9fe-027292194228).

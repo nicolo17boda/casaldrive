@@ -145,7 +145,7 @@ export default function App() {
               }}>Esplora dall’alto <span>◎</span></button>}
               <div className="settings">
                 <label>
-                  Volume motore <span>{engineVolume === 0 ? 'Disattivato' : `${Math.round(engineVolume * 100)}%`}</span>
+                  Motore AMG A 45 S <span>{engineVolume === 0 ? 'Disattivato' : `${Math.round(engineVolume * 100)}%`}</span>
                   <input
                     aria-label="Volume motore"
                     type="range"

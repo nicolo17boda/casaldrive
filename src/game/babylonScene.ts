@@ -10,10 +10,8 @@ import '@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent';
 import { ImageProcessingConfiguration } from '@babylonjs/core/Materials/imageProcessingConfiguration';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
-import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
-import { CreateBox } from '@babylonjs/core/Meshes/Builders/boxBuilder';
-import { CreateCylinder } from '@babylonjs/core/Meshes/Builders/cylinderBuilder';
-import { createCityWorld, material } from '../world/babylonWorld';
+import { createMercedesA45 } from './mercedesA45';
+import { createCityWorld } from '../world/babylonWorld';
 import { MotionInterpolator, FIXED_STEP } from './interpolation';
 import { stepVehicle, type VehicleState } from './physics';
 import { controls } from './input';
@@ -54,43 +52,7 @@ export function createGameScene(engine: AbstractEngine, initial: GameProps, canv
   sun.intensity = 1.8;
   createCityWorld(scene, initial.city);
 
-  const car = new TransformNode('car', scene);
-  const paint = material(scene, 'car-paint', '#e97945');
-  const glass = material(scene, 'car-glass', '#263c40');
-  paint.specularColor.set(0.45, 0.4, 0.35);
-  paint.specularPower = 64;
-  glass.specularColor.set(0.65, 0.7, 0.75);
-  glass.specularPower = 96;
-  const roof = material(scene, 'car-roof', '#f38b54');
-  const rubber = material(scene, 'tires', '#202a29');
-  const headlight = material(scene, 'headlights', '#fff2c5');
-  headlight.emissiveColor = Color3.FromHexString('#ffe8ac').scale(0.5);
-  const brake = material(scene, 'brake-lights', '#c84032');
-  const box = (name: string, size: number[], position: number[], surface: typeof paint) => {
-    const mesh = CreateBox(name, { width: size[0], height: size[1], depth: size[2] }, scene);
-    mesh.position.set(position[0], position[1], position[2]);
-    mesh.material = surface;
-    mesh.parent = car;
-    return mesh;
-  };
-  box('body', [1.8, 0.65, 4.1], [0, 0.65, 0], paint);
-  box('cabin', [1.5, 0.65, 1.85], [0, 1.18, 0.15], glass);
-  box('roof', [1.57, 0.12, 1.95], [0, 1.53, 0.15], roof);
-  const wheels: { pivot: TransformNode; tire: ReturnType<typeof CreateCylinder>; front: boolean }[] = [];
-  for (const x of [-1, 1]) {
-    for (const z of [-1.25, 1.25]) {
-      const pivot = new TransformNode(`wheel-${x}-${z}`, scene);
-      pivot.parent = car;
-      pivot.position.set(x * 0.88, 0.4, z);
-      const tire = CreateCylinder('tire', { height: 0.25, diameter: 0.76, tessellation: 12 }, scene);
-      tire.rotation.z = Math.PI / 2;
-      tire.parent = pivot;
-      tire.material = rubber;
-      wheels.push({ pivot, tire, front: z < 0 });
-    }
-    box('headlight', [0.45, 0.18, 0.04], [x * 0.6, 0.7, -2.06], headlight);
-    box('stop', [0.45, 0.18, 0.04], [x * 0.6, 0.7, 2.06], brake);
-  }
+  const { car, brake, wheels } = createMercedesA45(scene);
 
   const chase = new FreeCamera('driving-camera', new Vector3(0, 6, 12), scene);
   const [left, top, right, bottom] = initial.city.bounds;
@@ -186,7 +148,7 @@ export function createGameScene(engine: AbstractEngine, initial: GameProps, canv
     car.rotation.y = pose.yaw;
     for (const { pivot, tire, front } of wheels) {
       if (front) pivot.rotation.y = vehicle.steering * 0.48;
-      if (!paused && cameraMode !== 3) tire.rotation.x -= vehicle.speed * Math.min(delta, 0.1) / 0.38;
+      if (!paused && cameraMode !== 3) tire.rotation.x -= vehicle.speed * Math.min(delta, 0.1) / 0.35;
     }
     const braking = (controls.brake && vehicle.speed > 0.3)
       || (controls.throttle && vehicle.speed < -0.3) || controls.handbrake;
