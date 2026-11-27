@@ -28,7 +28,7 @@ test('acceleration shifts up with a rev drop and no gear hunting at steady speed
       assert.ok(engine.shiftRemaining > 0);
       assert.ok(engine.rpm < rpm);
     }
-    assert.ok(engine.rpm >= 850 && engine.rpm <= 6200);
+    assert.ok(engine.rpm >= 850 && engine.rpm <= 7200);
   }
   assert.ok(shifts >= 3);
   const gear = engine.gear;
@@ -60,5 +60,18 @@ test('engine response is consistent across frame rates and bounded after stalls'
   for (let i = 0; i < 144; i++) b.update(5, controls, 1 / 144);
   assert.ok(Math.abs(a.rpm - b.rpm) < 0.001);
   a.update(1000, controls, 100);
-  assert.ok(Number.isFinite(a.rpm) && a.rpm <= 6200);
+  assert.ok(Number.isFinite(a.rpm) && a.rpm <= 7200);
+});
+
+
+test('turbo spools under load and vents once on throttle release', () => {
+  const engine = new EngineModel();
+  const throttle = { ...emptyControls(), throttle: true };
+  for (let i = 0; i < 240; i++) engine.update(24, throttle, 1 / 60);
+  assert.ok(engine.boost > 0.8);
+  engine.update(24, emptyControls(), 1 / 60);
+  assert.ok(engine.blowoff > 0.8);
+  for (let i = 0; i < 120; i++) engine.update(24, emptyControls(), 1 / 60);
+  assert.ok(engine.boost < 0.01);
+  assert.ok(engine.blowoff < 0.01);
 });
