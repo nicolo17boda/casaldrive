@@ -12,7 +12,7 @@ const source = readFileSync('public/data/city.json', 'utf8');
 const city: City = JSON.parse(source);
 const engine = new NullEngine();
 const game = createGameScene(engine, { city, vehicle: createVehicle(city.spawn),
-  paused: true, cameraMode: 3, cameraDistance: 11, topSpeed: 100, engineVolume: 0 });
+  paused: true, cameraMode: 3, cameraDistance: 11, engineVolume: 0 });
 try {
   const meshes = game.scene.meshes.filter((mesh): mesh is Mesh => mesh instanceof Mesh
     && /^(ground|area-|areas-|roads|paths|buildings-)/.test(mesh.name));

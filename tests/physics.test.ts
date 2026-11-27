@@ -45,9 +45,9 @@ test("forward speed limit is enforced", () => {
   };
   const s = createVehicle(city.spawn);
   for (let i = 0; i < 10000; i++)
-    stepVehicle(s, { ...emptyControls(), throttle: true }, 1 / 120, large, 60);
-  assert.ok(s.speed <= 60 / 3.6);
-  assert.ok(s.speed > 16);
+    stepVehicle(s, { ...emptyControls(), throttle: true }, 1 / 120, large);
+  assert.ok(s.speed <= 270 / 3.6);
+  assert.ok(s.speed > 74.9);
 });
 test("footprint collisions include edges and stop a moving vehicle", () => {
   assert.equal(collides(40, -30, city.buildings), true);

@@ -75,3 +75,30 @@ test('turbo spools under load and vents once on throttle release', () => {
   assert.ok(engine.boost < 0.01);
   assert.ok(engine.blowoff < 0.01);
 });
+
+test('seven gears shift up, then rev-match safe downshifts under braking', () => {
+  const engine = new EngineModel();
+  const throttle = { ...emptyControls(), throttle: true };
+  const visited = new Set<number>();
+  for (let i = 0; i < 3600; i++) {
+    engine.update(i / 3600 * 75, throttle, 1 / 60);
+    visited.add(engine.gear);
+  }
+  assert.equal(engine.gear, 6);
+  assert.equal(visited.size, 7);
+  let downshifts = 0, blips = 0;
+  for (let i = 0; i < 1800; i++) {
+    const previousGear = engine.gear, previousRpm = engine.rpm;
+    engine.update(75 * (1 - i / 1800), { ...emptyControls(), brake: true }, 1 / 60);
+    if (engine.gear < previousGear && engine.shiftRemaining > 0) {
+      downshifts++;
+      assert.ok(engine.rpm > previousRpm);
+    }
+    if (engine.revMatch > 0.5) blips++;
+    assert.ok(engine.rpm <= 7200);
+  }
+  assert.equal(downshifts, 6);
+  assert.ok(blips > 6);
+  assert.equal(engine.gear, 0);
+  assert.equal(engine.revMatch, 0);
+});

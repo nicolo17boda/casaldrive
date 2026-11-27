@@ -2,6 +2,8 @@ import { inside, moveVehicle } from "./collision";
 export { inside } from "./collision";
 import type { Building, City } from "../geo/types";
 import { buildingBounds } from './spatialIndex';
+export const TOP_SPEED_KMH = 270;
+
 export interface VehicleState {
   x: number;
   z: number;
@@ -72,17 +74,16 @@ export function stepVehicle(
   c: Controls,
   dt: number,
   city: City,
-  topSpeed = 100,
 ) {
   const steer = Number(c.left) - Number(c.right);
   s.steering += (steer - s.steering) * (1 - Math.exp(-9 * dt));
   let force = c.throttle ? (s.speed < -0.3 ? 19 : 8.5) : 0;
   if (c.brake) force += s.speed > 0.3 ? -22 : -5;
   s.speed += force * dt;
-  s.speed *= Math.exp(-(c.handbrake ? 2.4 : 0.13) * dt);
+  s.speed *= Math.exp(-(c.handbrake ? 2.4 : 0.10) * dt);
   if (!c.throttle && !c.brake)
     s.speed = Math.sign(s.speed) * Math.max(0, Math.abs(s.speed) - 0.65 * dt);
-  s.speed = Math.max(-8, Math.min(topSpeed / 3.6, s.speed));
+  s.speed = Math.max(-8, Math.min(TOP_SPEED_KMH / 3.6, s.speed));
   const turn =
     s.steering *
     (s.speed / 2.7) *

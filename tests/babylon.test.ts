@@ -75,7 +75,7 @@ test('Babylon real-city scene preserves driving, pause, overview, reset and disp
   const city: City = JSON.parse(readFileSync('public/data/city.json', 'utf8'));
   const vehicle = createVehicle(city.spawn);
   const props: GameProps = { city, vehicle, paused: true, cameraMode: 3,
-    cameraDistance: 11, topSpeed: 100, engineVolume: 0 };
+    cameraDistance: 11, engineVolume: 0 };
   const game = createGameScene(engine, props);
   try {
     const buildings = game.scene.meshes.filter(m => m.name.startsWith('buildings-'));
