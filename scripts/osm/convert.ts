@@ -66,8 +66,7 @@ export function convert(
     } else if (
       t.highway &&
       t.area !== "yes" &&
-      t.tunnel !== "yes" &&
-      t.bridge !== "yes"
+      t.tunnel !== "yes"
     ) {
       const access = t.motor_vehicle ?? t.vehicle ?? t.access;
       const drivable =
@@ -80,6 +79,7 @@ export function convert(
         ...roadWidth(t),
         highway: t.highway,
         drivable,
+        ...(t.bridge && t.bridge !== "no" ? { bridge: true } : {}),
       });
     } else if (
       closed &&

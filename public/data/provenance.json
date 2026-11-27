@@ -17,9 +17,16 @@
     45.1372
   ],
   "counts": {
-    "roads": 1205,
+    "roads": 1214,
     "buildings": 1679,
     "areas": 136
   },
-  "limitations": "OSM polygons and assembled multipolygon courtyards. Incomplete relations skipped. Flat terrain; no bridge/tunnel geometry. Heights estimated where absent."
+  "limitations": "Flat terrain including bridge decks; underground tunnels excluded. Heights estimated where absent. Incomplete relations skipped.",
+  "processing": {
+    "bridges": {
+      "source": "bundled source.geojson",
+      "restored": 9,
+      "representation": "Flat drivable bridge decks; no elevation simulation"
+    }
+  }
 }

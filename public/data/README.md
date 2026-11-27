@@ -36,3 +36,17 @@ The 24 November update contains 1,679 buildings, 1,205 road segments and
 Use `OSM_BBOX="south,west,north,east" npm run osm:fetch` for a different region.
 The source includes complete ways beyond the playable bounds; incomplete
 multipolygon relations are skipped rather than inventing missing geometry.
+
+
+## Bridge connectivity and place names
+
+The bundled source already contained nine bridge segments that the old converter
+excluded. These are now included (five drivable, four pedestrian/cycle segments),
+for 1,214 roads in total. Run `node --import tsx scripts/osm/bridges.ts` to repeat
+this repair from the bundled source without a new download. `provenance.json`
+records the processing separately from the original download date.
+Bridge carriageways follow the source coordinates and remain at the game's flat
+road elevation; concrete shoulders distinguish them from water. Underground
+tunnels are still excluded. No speculative links across water were created.
+Street and square names come from the same OSM data; unnamed road classes are
+not displayed as place names. Labels appear in the 3D view, minimap and driving HUD.

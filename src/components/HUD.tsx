@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { currentPlace } from "../geo/placeNames";
 import { buildMinimap } from "./minimap";
 import type { City } from "../geo/types";
 import type { VehicleState } from "../game/physics";
@@ -19,6 +20,7 @@ export default function HUD({
   paused: boolean;
 }) {
   const [stats, setStats] = useState({
+    place: "",
     speed: 0,
     distance: 0,
     collision: false,
@@ -33,12 +35,13 @@ export default function HUD({
   useEffect(() => {
     const draw = () => {
       const nextStats = {
+        place: currentPlace(city, vehicle.x, vehicle.z),
         speed: Math.round(Math.abs(vehicle.speed) * 3.6),
         distance: Math.floor(vehicle.distance / 100) * 100,
         collision: vehicle.collision,
         reverse: vehicle.speed < -0.1,
       };
-      setStats(previous => previous.speed === nextStats.speed && previous.distance === nextStats.distance && previous.collision === nextStats.collision && previous.reverse === nextStats.reverse ? previous : nextStats);
+      setStats(previous => previous.place === nextStats.place && previous.speed === nextStats.speed && previous.distance === nextStats.distance && previous.collision === nextStats.collision && previous.reverse === nextStats.reverse ? previous : nextStats);
       const ctx = canvas.current?.getContext("2d");
       if (!ctx) return;
       const size = 220,
@@ -101,7 +104,7 @@ export default function HUD({
       </header>
       <div className="place-tag">
         <span>{cameraMode === 3 ? "LA CITTÀ DALL’ALTO" : "ESPLORAZIONE LIBERA"}</span>
-        <h1>{cameraMode === 3 ? city.name : city.real ? "Un giro in città." : "Si parte da qui."}</h1>
+        <h1>{cameraMode === 3 ? city.name : city.real ? (stats.place || "Un giro in città.") : "Si parte da qui."}</h1>
         <p>
           {cameraMode === 3 ? "Trascina per ruotare · rotella per avvicinarti · tasto destro per spostarti" : city.real
             ? "Le strade di Casale, al tuo ritmo."

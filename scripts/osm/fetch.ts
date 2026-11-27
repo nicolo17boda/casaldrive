@@ -64,7 +64,7 @@ async function main() {
         origin: city.origin,
         counts: { roads: city.roads.length, buildings: city.buildings.length, areas: city.areas.length },
         limitations:
-          "OSM polygons and assembled multipolygon courtyards. Incomplete relations skipped. Flat terrain; no bridge/tunnel geometry. Heights estimated where absent.",
+          "OSM polygons and assembled multipolygon courtyards. Incomplete relations skipped. Flat terrain including bridge decks; underground tunnels excluded. Heights estimated where absent.",
       },
       null,
       2,
