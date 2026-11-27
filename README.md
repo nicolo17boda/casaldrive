@@ -221,7 +221,7 @@ Attribution appears in the HUD when real data is loaded. See
   only for conservative spawn clearance checks.
 - `src/game/input.ts`: keyboard state and focus-loss handling.
 - `src/game/engineModel.ts` and `engineAudio.ts`: procedural inline-four engine
-  audio with eight simulated automatic gears, launch clutch slip, reverse,
+  audio with seven simulated automatic gears, launch clutch slip, reverse,
   combustion harmonics and intake noise. The menu controls engine volume (zero
   mutes it). Audio starts after a keyboard/pointer gesture and fades out during
   pause, city overview and focus loss. No external audio assets are required.
@@ -308,10 +308,12 @@ diffusore, quattro scarichi e cerchi a dieci razze con pinze rosse. I dettagli
 rigidi sono raggruppati per materiale; sterzo e rotazione delle ruote restano
 indipendenti. Le proporzioni sono adattate all'ingombro delle collisioni arcade.
 
-L'audio sintetizza un quattro cilindri turbo con otto rapporti approssimati,
+L'audio sintetizza un quattro cilindri turbo con sette rapporti approssimati,
 regime massimo di 7.200 giri, risonanza dello scarico, aspirazione dipendente
 dal carico, salita progressiva della pressione turbo, sfiato in rilascio e
-un breve taglio con impulso sonoro in cambiata. Volume, pausa e attivazione
+un breve taglio con impulso sonoro in salita di marcia e rev match in scalata.
+La velocità massima è fissa a 270 km/h, senza cursore di regolazione.
+I sette rapporti sono una personalizzazione del gioco: la A45 S reale usa otto marce. Volume, pausa e attivazione
 tramite gesto utente restano disponibili. Non è un campionamento del motore
 reale e non modifica le prestazioni della fisica di guida.
 

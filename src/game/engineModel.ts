@@ -1,7 +1,7 @@
 import type { Controls } from './physics';
 
 // Approximate audio gearing, not a homologated drivetrain simulation.
-const RATIOS = [4.0, 2.9, 2.15, 1.7, 1.35, 1.1, 0.9, 0.75];
+const RATIOS = [4.0, 2.9, 2.15, 1.7, 1.35, 1.0, 0.72];
 export const REDLINE = 7200;
 const IDLE = 850;
 // Wheel circumference 1.98 m, final drive 4.1; speed is in metres/second.
@@ -13,6 +13,8 @@ export class EngineModel {
   gear = 0;
   load = 0;
   shiftRemaining = 0;
+  revMatch = 0;
+  private downshifting = false;
   boost = 0;
   blowoff = 0;
   shiftPulse = 0;
@@ -35,28 +37,35 @@ export class EngineModel {
     if (Math.abs(speed) < 0.5 || reverse !== this.reverse) {
       this.gear = 0;
       this.shiftRemaining = 0;
+      this.downshifting = false;
       this.cooldown = 0;
     }
     this.reverse = reverse;
     const coupled = wheelRpm(speed) * RATIOS[this.gear];
-    if (!reverse && this.cooldown === 0) {
+    if (!reverse && Math.abs(speed) >= 0.5 && this.cooldown === 0) {
       const previous = this.gear;
-      if (coupled > (accelerating ? 6600 : 3800) && this.gear < RATIOS.length - 1) this.gear++;
-      else if (coupled < 1800 && this.gear > 0) this.gear--;
+      if (!controls.brake && coupled > (accelerating ? 6600 : 3800) && this.gear < RATIOS.length - 1) this.gear++;
+      else if (this.gear > 0 && coupled < (controls.brake ? 3000 : accelerating ? 2400 : 1800)
+        && wheelRpm(speed) * RATIOS[this.gear - 1] < REDLINE - 300) this.gear--;
       if (this.gear !== previous) {
-        this.shiftRemaining = 0.12;
+        this.downshifting = this.gear < previous;
+        this.shiftRemaining = this.downshifting ? 0.2 : 0.12;
         this.shiftPulse = this.load;
         this.cooldown = 0.65;
       }
     }
     const shifting = this.shiftRemaining > 0;
-    const targetLoad = accelerating && !shifting ? 1 : 0;
+    // Throttle blip during the disengaged part of a downshift; RPM targets the
+    // next ratio at the current road speed, rather than an arbitrary rev spike.
+    this.revMatch = shifting && this.downshifting
+      ? Math.sin(Math.PI * Math.min(1, this.shiftRemaining / 0.2)) : 0;
+    const targetLoad = this.revMatch * 0.7 + (accelerating && !shifting ? 1 : 0);
     this.load += (targetLoad - this.load) * (1 - Math.exp(-dt * 12));
     // Clutch slip lets the engine rise off idle during launch, including reverse.
     const launch = accelerating ? 1500 : IDLE;
     const target = Math.min(REDLINE, Math.max(launch,
       wheelRpm(speed) * (reverse ? 3.2 : RATIOS[this.gear])));
-    this.rpm += (target - this.rpm) * (1 - Math.exp(-dt * (shifting ? 15 : 8)));
+    this.rpm += (target - this.rpm) * (1 - Math.exp(-dt * (shifting ? (this.downshifting ? 24 : 15) : 8)));
     const targetBoost = accelerating && !shifting
       ? Math.max(0, Math.min(1, (this.rpm - 1600) / 2300)) : 0;
     this.boost += (targetBoost - this.boost) * (1 - Math.exp(-dt * (targetBoost > this.boost ? 3 : 11)));

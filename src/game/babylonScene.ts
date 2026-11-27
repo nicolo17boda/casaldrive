@@ -24,7 +24,6 @@ export interface GameProps {
   paused: boolean;
   cameraMode: number;
   cameraDistance: number;
-  topSpeed: number;
   engineVolume: number;
 }
 
@@ -116,7 +115,7 @@ export function createGameScene(engine: AbstractEngine, initial: GameProps, canv
     }
   });
   function update(props: GameProps, delta: number) {
-    const { vehicle, city, paused, cameraMode, cameraDistance, topSpeed } = props;
+    const { vehicle, city, paused, cameraMode, cameraDistance } = props;
     if (cameraMode !== previousMode) {
       thawMaterials();
       scene.activeCamera = cameraMode === 3 ? overview : chase;
@@ -142,7 +141,7 @@ export function createGameScene(engine: AbstractEngine, initial: GameProps, canv
       attached = interactive;
     }
     const pose = motion.advance(vehicle, delta, paused || cameraMode === 3, () => {
-      stepVehicle(vehicle, controls, FIXED_STEP, city, topSpeed);
+      stepVehicle(vehicle, controls, FIXED_STEP, city);
     });
     car.position.set(pose.x, 0, pose.z);
     car.rotation.y = pose.yaw;

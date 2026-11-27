@@ -144,7 +144,7 @@ export class EngineAudio {
 
   update(speed: number, controls: Controls, dt: number) {
     if (!this.active) return;
-    const { rpm, load, shiftRemaining, boost, blowoff, shiftPulse } = this.model.update(speed, controls, dt);
+    const { rpm, load, shiftRemaining, boost, blowoff, shiftPulse, revMatch } = this.model.update(speed, controls, dt);
     const ctx = this.context;
     if (!ctx || ctx.state !== 'running') return;
     const time = ctx.currentTime;
@@ -152,7 +152,7 @@ export class EngineAudio {
       param?.setTargetAtTime(value, time, 0.04);
     smooth(this.exhaust?.frequency, rpm / 30);
     smooth(this.mechanical?.frequency, rpm / 60);
-    smooth(this.exhaustGain?.gain, (0.17 + load * 0.24 + boost * 0.045) * (shiftRemaining > 0 ? 0.25 : 1));
+    smooth(this.exhaustGain?.gain, (0.17 + load * 0.24 + boost * 0.045) * (shiftRemaining > 0 ? 0.25 + revMatch * 0.75 : 1));
     smooth(this.mechanicalGain?.gain, 0.035 + rpm / 7200 * 0.045);
     smooth(this.intakeGain?.gain, 0.012 + load * 0.07 + boost * 0.045);
     smooth(this.filter?.frequency, 380 + rpm * 0.25 + load * 1500);

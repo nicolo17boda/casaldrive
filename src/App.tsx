@@ -3,7 +3,7 @@ import GameCanvas from "./components/GameCanvas";
 import HUD from "./components/HUD";
 import { loadCity, testWorld } from "./geo/loaders";
 import type { City } from "./geo/types";
-import { createVehicle, type VehicleState } from "./game/physics";
+import { createVehicle, TOP_SPEED_KMH, type VehicleState } from "./game/physics";
 import { bindInput } from "./game/input";
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -33,7 +33,6 @@ export default function App() {
   const [started, setStarted] = useState(false);
   const [cameraMode, setCameraMode] = useState(3);
   const [cameraDistance, setCameraDistance] = useState(11);
-  const [topSpeed, setTopSpeed] = useState(100);
   const [engineVolume, setEngineVolume] = useState(0.65);
   const [fallback, setFallback] = useState(false);
   useEffect(() => {
@@ -81,7 +80,6 @@ export default function App() {
           paused={paused}
           cameraMode={cameraMode}
           cameraDistance={cameraDistance}
-          topSpeed={topSpeed}
           engineVolume={engineVolume}
         />
         <HUD
@@ -167,18 +165,10 @@ export default function App() {
                     onChange={(e) => setCameraDistance(+e.target.value)}
                   />
                 </label>
-                <label>
-                  Velocità massima <span>{topSpeed} km/h</span>
-                  <input
-                    aria-label="Velocità massima"
-                    type="range"
-                    min="40"
-                    max="140"
-                    step="10"
-                    value={topSpeed}
-                    onChange={(e) => setTopSpeed(+e.target.value)}
-                  />
-                </label>
+                <div>
+                  Velocità massima <strong>{TOP_SPEED_KMH} km/h</strong>
+                  <p>Automatico a 7 marce · Rev match in scalata</p>
+                </div>
               </div>
               <div className="menu-controls">
                 <kbd>W / ↑</kbd> accelera <kbd>S / ↓</kbd> frena / retro
