@@ -90,6 +90,13 @@ export function createCityWorld(scene: Scene, city: City) {
     mesh.material = kind === 'green' ? areaMaterials.green
       : kind === 'water' ? areaMaterials.water : areaMaterials.paved;
   }
+  // Concrete shoulders make source-backed bridge decks visible over water.
+  const bridgeCity = { ...city, roads: city.roads.filter(r => r.bridge).map(r => ({...r, width:r.width+1, drivable:true})) };
+  if (bridgeCity.roads.length) {
+    const deck = roadsGeometry(bridgeCity, true);
+    deck.translate(0, -0.015, 0);
+    geometryMesh(scene, 'bridge-decks', deck).material = material(scene, 'bridge-concrete', '#acb3b5');
+  }
   for (const drivable of [false, true]) {
     const mesh = geometryMesh(scene, drivable ? 'roads' : 'paths', roadsGeometry(city, drivable));
     const surface = material(scene, `${mesh.name}-material`, drivable ? '#303238' : '#bcb5a5');

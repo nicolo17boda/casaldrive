@@ -319,3 +319,14 @@ reale e non modifica le prestazioni della fisica di guida.
 
 Riferimento per architettura motore e cambio:
 [Mercedes-Benz, A 45 S e cambio DCT a otto rapporti](https://media.mercedes-benz.com/en/article/7a4be9a5-cfdf-4fe2-b9fe-027292194228).
+
+
+## Nomi stradali e ponti
+
+Nomi di vie e piazze dalla fonte OSM inclusa: etichette nella vista 3D, nomi
+sulla minimappa e indicazione della strada o piazza nella schermata di guida.
+Le etichette vicine vengono diradate per ridurre le sovrapposizioni.
+Ripristinati nove segmenti di ponte prima esclusi dall'importazione (cinque
+stradali), mantenendo coordinate e collegamenti OSM: 1.214 tratti totali.
+I ponti hanno bordi in cemento e carreggiata continua sopra l'acqua, sul piano
+orizzontale della simulazione; quote, rampe e sottopassi non sono simulati.

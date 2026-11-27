@@ -8,6 +8,7 @@ export interface Road {
   widthSource?: WidthSource;
   highway?: string;
   drivable: boolean;
+  bridge?: boolean;
 }
 export interface Building {
   name?: string;

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Engine } from '@babylonjs/core/Engines/engine';
 import { createGameScene, type GameProps } from '../game/babylonScene';
+import { attachPlaceLabels } from '../world/placeLabels';
 import { EngineAudio } from '../game/engineAudio';
 import { controls } from '../game/input';
 import { DemandRenderLoop } from '../game/renderLoop';
@@ -8,6 +9,7 @@ export type { GameProps } from '../game/babylonScene';
 
 export default function GameCanvas(props: GameProps) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const labels = useRef<HTMLCanvasElement>(null);
   const latest = useRef(props);
   const invalidate = useRef<() => void>(() => {});
   const [failed, setFailed] = useState(false);
@@ -37,11 +39,13 @@ export default function GameCanvas(props: GameProps) {
       if (document.hidden) loop?.suspend();
       else invalidate.current();
     };
+    let detachLabels: (() => void) | undefined;
     let observer: ResizeObserver | undefined;
     try {
       engine = new Engine(element, true, { powerPreference: 'high-performance', stencil: true });
       engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, 1.5));
       game = createGameScene(engine, latest.current, element);
+      if (labels.current) detachLabels = attachPlaceLabels(game.scene, props.city, labels.current);
       window.addEventListener('pointerdown', unlock, true);
       window.addEventListener('keydown', unlock, true);
       window.addEventListener('blur', silence);
@@ -97,12 +101,14 @@ export default function GameCanvas(props: GameProps) {
       window.removeEventListener('resize', resize);
       audio.dispose();
       engine?.stopRenderLoop();
+      detachLabels?.();
       game?.dispose();
       engine?.dispose();
     };
   }, [props.city, props.vehicle]);
   return <>
     <canvas ref={canvas} className="game-canvas" aria-label="CasalDrive: città 3D" />
+    <canvas ref={labels} aria-hidden="true" style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}} />
     {failed && <div className="fatal" role="alert">Impossibile avviare la scena 3D. Verifica l'accelerazione grafica del browser e ricarica.</div>}
   </>;
 }
