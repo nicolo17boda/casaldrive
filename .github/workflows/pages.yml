@@ -2,7 +2,7 @@ name: Deploy CasalDrive to GitHub Pages
 
 on:
   push:
-    branches: [feat/driving-prototype]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
