@@ -17,6 +17,7 @@ export class EngineAudio {
   private blowoffGain?: GainNode;
   private shiftGain?: GainNode;
   private intakeFilter?: BiquadFilterNode;
+  private revMatchGain?: GainNode;
   private sources: AudioScheduledSourceNode[] = [];
   private active = false;
   private volume = 0.65;
@@ -76,6 +77,13 @@ export class EngineAudio {
     exhaust.connect(exhaustGain).connect(filter);
     this.exhaust = exhaust;
     this.exhaustGain = exhaustGain;
+    // Dedicated combustion transient, independent of pedal load and shift cut.
+    // The main exhaust path alone softened braking blips almost to silence.
+    const blipFilter = ctx.createBiquadFilter();
+    blipFilter.type = 'bandpass'; blipFilter.frequency.value = 750; blipFilter.Q.value = 0.6;
+    const revMatchGain = ctx.createGain(); revMatchGain.gain.value = 0;
+    exhaust.connect(blipFilter).connect(revMatchGain).connect(master);
+    this.revMatchGain = revMatchGain;
 
     const mechanical = ctx.createOscillator();
     mechanical.type = 'triangle';
@@ -150,7 +158,8 @@ export class EngineAudio {
     const time = ctx.currentTime;
     const smooth = (param: AudioParam | undefined, value: number) =>
       param?.setTargetAtTime(value, time, 0.04);
-    smooth(this.exhaust?.frequency, rpm / 30);
+    this.exhaust?.frequency.setTargetAtTime(rpm / 30, time, revMatch > 0 ? 0.008 : 0.04);
+    this.revMatchGain?.gain.setTargetAtTime(revMatch * 0.5, time, 0.008);
     smooth(this.mechanical?.frequency, rpm / 60);
     smooth(this.exhaustGain?.gain, (0.17 + load * 0.24 + boost * 0.045) * (shiftRemaining > 0 ? 0.25 + revMatch * 0.75 : 1));
     smooth(this.mechanicalGain?.gain, 0.035 + rpm / 7200 * 0.045);

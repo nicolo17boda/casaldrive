@@ -15,6 +15,7 @@ export class EngineModel {
   shiftRemaining = 0;
   revMatch = 0;
   private downshifting = false;
+  private revMatchRpm = IDLE;
   boost = 0;
   blowoff = 0;
   shiftPulse = 0;
@@ -45,26 +46,33 @@ export class EngineModel {
     if (!reverse && Math.abs(speed) >= 0.5 && this.cooldown === 0) {
       const previous = this.gear;
       if (!controls.brake && coupled > (accelerating ? 6600 : 3800) && this.gear < RATIOS.length - 1) this.gear++;
-      else if (this.gear > 0 && coupled < (controls.brake ? 3000 : accelerating ? 2400 : 1800)
+      else if (this.gear > 0 && coupled < (controls.brake ? 4200 : accelerating ? 2400 : 1800)
         && wheelRpm(speed) * RATIOS[this.gear - 1] < REDLINE - 300) this.gear--;
       if (this.gear !== previous) {
         this.downshifting = this.gear < previous;
-        this.shiftRemaining = this.downshifting ? 0.2 : 0.12;
-        this.shiftPulse = this.load;
-        this.cooldown = 0.65;
+        this.shiftRemaining = this.downshifting ? 0.24 : 0.12;
+        // A braking downshift has no pedal load: give it its own audible pulse.
+        this.shiftPulse = this.downshifting ? 0.8 : this.load;
+        this.revMatchRpm = Math.min(REDLINE - 200, wheelRpm(speed) * RATIOS[this.gear] + 180);
+        this.cooldown = this.downshifting ? 0.26 : 0.65;
       }
     }
     const shifting = this.shiftRemaining > 0;
     // Throttle blip during the disengaged part of a downshift; RPM targets the
     // next ratio at the current road speed, rather than an arbitrary rev spike.
+    const blipElapsed = 0.24 - this.shiftRemaining;
     this.revMatch = shifting && this.downshifting
-      ? Math.sin(Math.PI * Math.min(1, this.shiftRemaining / 0.2)) : 0;
+      ? (blipElapsed < 0.025 ? 0.2 + 0.8 * blipElapsed / 0.025
+        : Math.max(0, 1 - (blipElapsed - 0.025) / 0.215)) : 0;
     const targetLoad = this.revMatch * 0.7 + (accelerating && !shifting ? 1 : 0);
     this.load += (targetLoad - this.load) * (1 - Math.exp(-dt * 12));
     // Clutch slip lets the engine rise off idle during launch, including reverse.
     const launch = accelerating ? 1500 : IDLE;
     const target = Math.min(REDLINE, Math.max(launch,
-      wheelRpm(speed) * (reverse ? 3.2 : RATIOS[this.gear])));
+      wheelRpm(speed) * (reverse ? 3.2 : RATIOS[this.gear]),
+      // Hold the blip target through initial clutch disengagement even while
+      // heavy braking rapidly reduces wheel RPM; then recouple to road speed.
+      this.revMatch > 0 ? IDLE + (this.revMatchRpm - IDLE) * Math.min(1, this.revMatch * 2) : IDLE));
     this.rpm += (target - this.rpm) * (1 - Math.exp(-dt * (shifting ? (this.downshifting ? 24 : 15) : 8)));
     const targetBoost = accelerating && !shifting
       ? Math.max(0, Math.min(1, (this.rpm - 1600) / 2300)) : 0;

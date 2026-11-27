@@ -102,3 +102,29 @@ test('seven gears shift up, then rev-match safe downshifts under braking', () =>
   assert.equal(engine.gear, 0);
   assert.equal(engine.revMatch, 0);
 });
+
+test('hard braking produces distinct blips even after pedal load has vanished', () => {
+  for (const fps of [30, 60, 144]) {
+    const engine = new EngineModel();
+    const gas = { ...emptyControls(), throttle: true };
+    for (let i = 0; i < fps * 30; i++) engine.update(40 * i / (fps * 30), gas, 1 / fps);
+    const brake = { ...emptyControls(), brake: true };
+    let shifts = 0, audibleFrames = 0, revRises = 0;
+    for (let i = 0; i < fps * 2; i++) {
+      const gear = engine.gear, rpm = engine.rpm;
+      engine.update(Math.max(0, 40 - i / fps * 22), brake, 1 / fps);
+      if (engine.gear < gear && engine.shiftRemaining > 0) {
+        shifts++;
+        assert.ok(engine.shiftPulse >= 0.79, 'braking pulse must not depend on throttle load');
+      }
+      if (engine.revMatch > 0.6) audibleFrames++;
+      if (engine.revMatch > 0 && engine.rpm > rpm + 30) revRises++;
+      assert.ok(engine.rpm <= 7200);
+    }
+    assert.ok(shifts >= 3);
+    assert.ok(audibleFrames >= fps * 0.15);
+    assert.ok(revRises >= 3);
+    engine.update(0, brake, 1 / fps);
+    assert.equal(engine.revMatch, 0);
+  }
+});
